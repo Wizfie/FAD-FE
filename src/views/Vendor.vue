@@ -106,7 +106,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import axios from 'axios'
+import api from '@/stores/axios.js'
 
 const router = useRouter()
 const vendors = ref([])
@@ -122,7 +122,7 @@ const goBack = () => {
 // Ambil data vendor dari backend
 const fetchVendors = async () => {
   try {
-    const response = await axios.get('/api/v1/get-vendor')
+    const response = await api.get('/api/v1/get-vendor')
     vendors.value = response.data
   } catch (error) {
     console.error('Gagal mengambil data vendor:', error)
@@ -137,11 +137,11 @@ const handleSubmit = async () => {
     if (isEditMode.value) {
       console.log('Mengupdate vendor:', newVendor.value) // Debugging
       console.log('id vendor:', editingVendorId.value) // Debugging
-      await axios.put(`/api/v1/update-vendor/${editingVendorId.value}`, newVendor.value)
+      await api.put(`/api/v1/update-vendor/${editingVendorId.value}`, newVendor.value)
       alert('Vendor berhasil diperbarui')
     } else {
       console.log('Menambahkan vendor baru:', newVendor.value)
-      await axios.post('/api/v1/save-vendor', newVendor.value)
+      await api.post('/api/v1/save-vendor', newVendor.value)
       alert('Vendor berhasil ditambahkan')
     }
     fetchVendors()
@@ -156,7 +156,7 @@ const deleteVendor = async (id) => {
   if (!confirm('Hapus vendor ini?')) return
 
   try {
-    await axios.delete(`/api/v1/delete-vendor/${id}`)
+    await api.delete(`/api/v1/delete-vendor/${id}`)
     fetchVendors()
     alert('Vendor berhasil dihapus')
   } catch (error) {

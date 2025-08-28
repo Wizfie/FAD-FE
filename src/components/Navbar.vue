@@ -1,7 +1,7 @@
 <template>
   <nav class="bg-gray-800 p-4">
     <div class="container mx-auto flex justify-between items-center">
-      <div class="text-white font-bold text-xl">FAD Process</div>
+      <div class="text-white font-bold text-xl">General Recycle Management</div>
 
       <button @click="toggleDarkMode" class="text-white p-2 rounded flex items-center">
         <transition name="rotate" mode="out-in">

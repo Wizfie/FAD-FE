@@ -94,10 +94,10 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
-import axios from 'axios'
 import NavGroup from '@/components/NavGroup.vue'
 import { useRoute } from 'vue-router'
-import { fmtDateToDDMMYYYY } from '@/utils/Helper.js'
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
+import api from '@/stores/axios'
 
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
@@ -120,27 +120,17 @@ watch(searchQuery, (val) => {
   }, 350)
 })
 
-// Menentukan apakah input adalah angka
-const isNumber = (str) => {
-  return !isNaN(str)
-}
-
-// Menentukan apakah input adalah tanggal
-const isDate = (str) => {
-  const regex = /^\d{4}-\d{2}-\d{2}$/ // Format tanggal: YYYY-MM-DD
-  return regex.test(str)
-}
-
-// Client filters by status when no server-side search is active
-const filteredData = computed(() =>
-  dataFad.value.filter((item) => (item.status || '').toLowerCase() === closed.value),
-)
+// Client filters by status then sorts by createdAt
+const filteredData = computed(() => {
+  const list = dataFad.value.filter((item) => (item.status || '').toLowerCase() === closed.value)
+  return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+})
 
 const headersFad = [
   'NO',
   'No FAD',
   'Item',
-  'plant',
+  'Plant',
   'Terima FAD',
   'Terima BBM',
   'Tanggal Serah Terima',
@@ -185,7 +175,7 @@ const prevPage = () => {
 const getData = async (page = currentPage.value) => {
   try {
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage, status: closed.value }
-    const response = await axios.get('/api/v1/get-fad', { params })
+    const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
@@ -200,6 +190,7 @@ const getData = async (page = currentPage.value) => {
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
         keterangan: item.keterangan ?? '',
+        createdAt: item.createdAt ?? null,
         id: item.id,
       }))
       totalItems.value = payload.meta?.total ?? rows.length

@@ -24,7 +24,15 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
-              <tr v-for="(row, index) in paginatedData" :key="index">
+              <tr v-if="Array.isArray(paginatedData) && paginatedData.length === 0">
+                <td
+                  :colspan="headers.length + (showAction ? 1 : 0)"
+                  class="px-4 py-4 text-sm text-center text-gray-500 dark:text-gray-400"
+                >
+                  Tidak ada data
+                </td>
+              </tr>
+              <tr v-else v-for="(row, index) in paginatedData" :key="index">
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
                   {{ indexNumber(row, index) }}
                 </td>
@@ -32,12 +40,14 @@
                 <td
                   v-for="(value, key) in row"
                   :key="key"
-                  v-show="key !== 'id'"
+                  v-show="key !== 'id' && key !== 'createdAt'"
                   class="px-3 py-4 text-xs text-wrap center dark:text-white"
                   :class="{
                     'w-32 whitespace-nowrap text-center':
                       key === 'terimaFad' || key === 'terimaBbm' || key === 'bast',
                     'text-xs': key === 'terimaFad' || key === 'terimaBbm' || key === 'bast',
+                    'bg-orange-100 text-black  dark:text-orang-300  dark:bg-transparent':
+                      key === 'status' && String(value ?? '').toLowerCase() === 'hold',
                     'bg-green-100 text-black  dark:text-green-300  dark:bg-transparent':
                       key === 'status' && String(value ?? '').toLowerCase() === 'open',
                     'bg-yellow-100 text-black dark:text-yellow-300 dark:bg-transparent':
@@ -100,29 +110,15 @@ const props = defineProps({
 
 // Mengambil data untuk setiap halaman
 const paginatedData = computed(() => {
-  // saat server sudah menyediakan halaman, bodyData adalah halaman saat ini
-  // hanya tampilkan apa yang diberikan server (frontend tidak melakukan slicing lagi)
   const rows = Array.isArray(props.bodyData) ? props.bodyData.slice() : []
-  // Ensure descending sort by terimaFad (newest first) as a client-side safeguard.
-  // Use raw date fields if provided, otherwise attempt to parse DD/MM/YYYY or ISO.
-  const toDate = (row) => {
-    if (!row) return new Date(0)
-    // prefer raw iso dates if present
-    if (row.terimaFadRaw) {
-      const d = new Date(row.terimaFadRaw)
-      return isNaN(d.getTime()) ? new Date(0) : d
-    }
-    const s = row.terimaFad
-    if (!s) return new Date(0)
-    // try DD/MM/YYYY
-    const m = String(s).match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-    if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}`)
-    const d = new Date(s)
-    return isNaN(d.getTime()) ? new Date(0) : d
+  const items = Number(props.itemsPerPage) || props.bodyData.length || 1
+
+  if (rows.length <= items) {
+    return rows
   }
 
-  rows.sort((a, b) => toDate(b) - toDate(a))
-  return rows
+  const startIndex = (Number(props.currentPage || 1) - 1) * items
+  return rows.slice(startIndex, startIndex + items)
 })
 
 const indexNumber = (row, index) => {

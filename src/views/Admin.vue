@@ -12,75 +12,224 @@
         </div>
       </div>
 
-      <div class="flex flex-wrap items-center mt-4 gap-2 sm:gap-4">
-        <!-- <button
-          class="flex items-center justify-center w-full px-5 py-2 text-sm text-gray-700 transition-colors duration-200 bg-white border rounded-lg gap-x-2 sm:w-auto dark:hover:bg-gray-800 dark:bg-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700"
+      <!-- === Aksi (kanan) === -->
+      <div class="relative flex items-center mt-4 gap-2 sm:gap-4">
+        <!-- Dashboard (primary) -->
+        <router-link
+          :to="{ name: 'dashboard' }"
+          class="inline-flex h-10 items-center rounded-lg bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:bg-blue-500 dark:hover:bg-blue-400"
+          aria-label="Buka Dashboard"
+          @click="isAddOpen = false"
         >
           <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
+            class="h-5 w-5 sm:mr-2"
+            viewBox="0 0 24 24"
             fill="none"
-            xmlns="http://www.w3.org/2000/svg"
+            stroke="currentColor"
+            stroke-width="1.5"
           >
-            <g clip-path="url(#clip0_3098_154395)">
-              <path
-                d="M13.3333 13.3332L9.99997 9.9999M9.99997 9.9999L6.66663 13.3332M9.99997 9.9999V17.4999M16.9916 15.3249C17.8044 14.8818 18.4465 14.1806 18.8165 13.3321C19.1866 12.4835 19.2635 11.5359 19.0351 10.6388C18.8068 9.7417 18.2862 8.94616 17.5555 8.37778C16.8248 7.80939 15.9257 7.50052 15 7.4999H13.95C13.6977 6.52427 13.2276 5.61852 12.5749 4.85073C11.9222 4.08295 11.104 3.47311 10.1817 3.06708C9.25943 2.66104 8.25709 2.46937 7.25006 2.50647C6.24304 2.54358 5.25752 2.80849 4.36761 3.28129C3.47771 3.7541 2.70656 4.42249 2.11215 5.23622C1.51774 6.04996 1.11554 6.98785 0.935783 7.9794C0.756025 8.97095 0.803388 9.99035 1.07431 10.961C1.34523 11.9316 1.83267 12.8281 2.49997 13.5832"
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 17.75h5.5v5.5-5.5zM3.75 17.75h5.5v5.5-5.5z"
+            />
+          </svg>
+          <span class="hidden sm:inline">Dashboard</span>
+        </router-link>
+        <!-- Tambah (dropdown outline) -->
+        <div class="relative">
+          <button
+            @click="toggleMenu"
+            class="inline-flex h-10 items-center rounded-lg border border-blue-600 px-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-blue-400 dark:text-blue-300 dark:hover:bg-blue-950/40"
+            aria-haspopup="menu"
+            :aria-expanded="isAddOpen"
+          >
+            <svg
+              class="h-5 w-5 sm:mr-2"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+            </svg>
+            <span class="hidden sm:inline">Menu</span>
+          </button>
+
+          <!-- Overlay layar penuh: klik = tutup -->
+          <div v-if="isAddOpen" class="fixed inset-0 z-20" @click="closeMenu"></div>
+
+          <!-- Menu dropdown -->
+          <div
+            v-if="isAddOpen"
+            class="absolute right-0 z-30 mt-2 w-48 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+            role="menu"
+          >
+            <button
+              @click="openFormFromMenu"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
+              role="menuitem"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
                 stroke="currentColor"
-                stroke-width="1.67"
+                stroke-width="1.5"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+              </svg>
+              Data baru
+            </button>
+            <button
+              @click="userPage"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
+              role="menuitem"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              Users Menu
+            </button>
+            <button
+              @click="openVendorFromMenu"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
+              role="menuitem"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              Vendor baru
+            </button>
+            <button
+              @click="setExportTarget('CHANGELOG')"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
+              role="menuitem"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M12 3v12m0 0l-4-4m4 4l4-4M21 21H3"
+                />
+              </svg>
+              Export ChangeLog
+            </button>
+            <button
+              @click="setExportTarget('FAD')"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 dark:text-gray-300"
+              role="menuitem"
+            >
+              <svg
+                class="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6"
+                />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 10l5-5 5 5" />
+              </svg>
+              Export FAD
+            </button>
+          </div>
+        </div>
+
+        <!-- Tombol Export FAD (langsung) -->
+        <div class="relative">
+          <!-- Overlay untuk popup export -->
+          <div v-if="isExportOpen" class="fixed inset-0 z-20" @click="isExportOpen = false"></div>
+
+          <!-- Popup Filter Export -->
+          <div
+            v-if="isExportOpen"
+            class="absolute right-0 z-30 mt-12 me-14 w-72 rounded-lg border border-gray-200 bg-white shadow-lg p-3 dark:border-gray-700 dark:bg-gray-900"
+            role="dialog"
+            aria-label="Filter Export FAD"
+          >
+            <label class="block text-xs text-gray-500 dark:text-gray-400"
+              >Range Tanggal (createdAt)</label
+            >
+            <label for="From"><small>From</small></label>
+            <input
+              v-model="exportFrom"
+              type="date"
+              :disabled="exportAll"
+              class="mt-1 mb-1 w-full text-sm px-2 py-1 border rounded disabled:bg-gray-100 dark:disabled:bg-gray-800"
+            />
+            <label for="To"><small>To</small></label>
+            <input
+              v-model="exportTo"
+              type="date"
+              :disabled="exportAll"
+              class="mb-2 w-full text-sm px-2 py-1 border rounded disabled:bg-gray-100 dark:disabled:bg-gray-800"
+            />
+
+            <label class="inline-flex items-center text-sm mb-2 select-none">
+              <input type="checkbox" v-model="exportAll" class="mr-2" />
+              All
+            </label>
+
+            <p v-if="exportError" class="text-xs text-red-600 mb-2">{{ exportError }}</p>
+
+            <div class="flex justify-end gap-2">
+              <button
+                @click="isExportOpen = false"
+                class="inline-flex items-center rounded-lg px-3 py-1 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:text-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                @click="doExport"
+                class="inline-flex items-center rounded-lg bg-blue-600 px-3 py-1 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Export
+              </button>
+            </div>
+          </div>
+          <button
+            @click="onLogout"
+            class="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-950/40"
+            aria-label="Logout"
+          >
+            <svg
+              class="h-5 w-5 sm:mr-2"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+            >
+              <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3"
               />
-            </g>
-            <defs>
-              <clipPath id="clip0_3098_154395">
-                <rect width="20" height="20" fill="white" />
-              </clipPath>
-            </defs>
-          </svg>
-          <span>Export</span>
-        </button> -->
-
-        <button
-          @click="toggleForm"
-          class="flex items-center justify-center w-full px-5 py-2 text-sm font-bold tracking-wide text-white transition-colors duration-200 bg-blue-500 rounded-lg sm:w-auto gap-x-2 hover:bg-blue-600 dark:hover:bg-blue-500 dark:bg-blue-600"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-5 h-5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>+ Data</span>
-        </button>
-        <button
-          @click="goToVendor"
-          class="flex items-center justify-center w-full px-5 py-2 text-sm font-bold tracking-wide text-white transition-colors duration-200 bg-blue-500 rounded-lg sm:w-auto gap-x-2 hover:bg-blue-600 dark:hover:bg-blue-500 dark:bg-blue-600"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke-width="1.5"
-            stroke="currentColor"
-            class="w-5 h-5"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span>+ Vendor</span>
-        </button>
+            </svg>
+            <span class="hidden sm:inline">Logout</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -111,11 +260,11 @@
         />
       </div>
       <div>
-        <h3 class="text-lg font-semibold">Last Update</h3>
+        <p class="text-sm font-semibold">Last Update</p>
         <template v-if="lastUpdateData">
-          <strong class="font-semibold text-gray-500 dark:text-gray-400">
+          <strong class="font-semibold text-sm text-gray-500 dark:text-gray-400">
             {{
-              lastUpdateData.lastUpdate.timestamp
+              lastUpdateData.lastUpdate?.timestamp
                 ? new Date(lastUpdateData.lastUpdate.timestamp).toLocaleString()
                 : 'Tidak tersedia'
             }}
@@ -152,10 +301,9 @@
 
     <!-- Form Slide-In -->
     <div
-      class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
+      class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
       :class="{ 'translate-x-0': isFormOpen, 'translate-x-full': !isFormOpen }"
     >
-      <!-- Menggunakan Komponen FormFad -->
       <FormFad
         :isFormOpen="isFormOpen"
         @toggle-form="toggleForm"
@@ -172,26 +320,78 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
-import { fmtDateToDDMMYYYY } from '@/utils/Helper.js'
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
+import api from '@/stores/axios.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+const authStore = useAuthStore()
 const router = useRouter()
 
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
+const isAddOpen = ref(false)
+
 const lastUpdateData = ref()
 
-// Pisahkan dataFad untuk read data
+const exportFrom = ref('')
+const exportTo = ref('')
+const exportAll = ref(false)
+const isExportOpen = ref(false)
+const exportError = ref('')
+const exportTarget = ref('FAD') // 'FAD' or 'CHANGELOG'
+
 const dataFad = ref([])
-const currentPage = ref(1) // Halaman aktif
+const currentPage = ref(1)
 const itemsPerPage = 10
 const searchQuery = ref('')
 const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
-// debounce search
+/* ========== UI Controls ========== */
+const toggleMenu = () => {
+  isAddOpen.value = !isAddOpen.value
+}
+const closeMenu = () => {
+  isAddOpen.value = false
+}
+
+const openFormFromMenu = () => {
+  closeMenu()
+  if (isEditMode.value) {
+    resetForm()
+    isEditMode.value = false
+  }
+  isFormOpen.value = true
+}
+const openVendorFromMenu = () => {
+  closeMenu()
+  router.push({ name: 'vendor' })
+}
+
+const userPage = () => {
+  closeMenu()
+  router.push({ name: 'users' })
+}
+
+/* Buka popup export dari menu */
+const openExportPopup = () => {
+  closeMenu()
+  isExportOpen.value = true
+}
+
+/* Jika All dicentang, kosongkan & disable date */
+watch(exportAll, (val) => {
+  exportError.value = ''
+  if (val) {
+    exportFrom.value = ''
+    exportTo.value = ''
+  }
+})
+
+/* Debounced search */
 let searchTimer = null
-watch(searchQuery, (val) => {
+watch(searchQuery, () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     currentPage.value = 1
@@ -199,8 +399,10 @@ watch(searchQuery, (val) => {
   }, 350)
 })
 
-// For admin we rely on server-side search + pagination; filteredData just reflects current page
-const filteredData = computed(() => dataFad.value)
+/* Sorting terbaru dulu */
+const filteredData = computed(() =>
+  dataFad.value.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+)
 
 const inputData = ref({
   noFad: '',
@@ -216,7 +418,6 @@ const inputData = ref({
   id: '',
 })
 
-// Reset form data
 const resetForm = () => {
   inputData.value = {
     noFad: '',
@@ -234,8 +435,6 @@ const resetForm = () => {
 }
 
 const editRow = (row) => {
-  // Menetapkan data yang akan diedit ke dalam inputData
-
   inputData.value = {
     noFad: row['noFad'],
     item: row.item,
@@ -249,11 +448,8 @@ const editRow = (row) => {
     keterangan: row.keterangan,
     id: row.id,
   }
-
-  // Menentukan bahwa ini adalah mode edit
   isFormOpen.value = true
   isEditMode.value = true
-  console.log(isEditMode.value)
 }
 
 const headers = [
@@ -270,7 +466,7 @@ const headers = [
   'Keterangan',
 ]
 
-// Toggle form
+/* Toggle form */
 const toggleForm = () => {
   if (isFormOpen.value && isEditMode.value) {
     resetForm()
@@ -279,25 +475,28 @@ const toggleForm = () => {
   isFormOpen.value = !isFormOpen.value
 }
 
-const goToVendor = () => {
-  router.push({ name: 'vendor' })
+/* Logout */
+const onLogout = () => {
+  closeMenu()
+  try {
+    authStore.logout()
+    localStorage.removeItem('user')
+    localStorage.removeItem('accessToken')
+  } catch {}
+  router.push({ name: 'login' })
 }
 
-// Mengupdate halaman saat tombol pagination diklik
+/* Pagination */
 const updatePage = (newPage) => {
   currentPage.value = newPage
   getData(newPage)
 }
-
-// Fungsi untuk tombol Next
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
     getData(currentPage.value)
   }
 }
-
-// Fungsi untuk tombol Previous
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -305,11 +504,21 @@ const prevPage = () => {
   }
 }
 
-// Fetch Data
+/* Fetch last update */
+const fetchLastUpdate = async () => {
+  try {
+    const res = await api.get('/api/getChangeLog', { params: { model: 'FAD', last: true } })
+    if (res.status === 200) lastUpdateData.value = res.data
+  } catch (e) {
+    console.error('Failed fetching last update:', e)
+  }
+}
+
+/* Fetch Data */
 const getData = async (page = currentPage.value) => {
   try {
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage }
-    const response = await axios.get('/api/v1/get-fad', { params })
+    const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
@@ -324,8 +533,10 @@ const getData = async (page = currentPage.value) => {
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
         keterangan: item.keterangan ?? '',
+        createdAt: item.createdAt ?? null,
         id: item.id,
       }))
+
       totalItems.value = payload.meta?.total ?? rows.length
       currentPage.value = payload.meta?.page ?? Number(page)
     }
@@ -334,8 +545,7 @@ const getData = async (page = currentPage.value) => {
   }
 }
 
-// Handle form submission
-
+/* Handle form submission */
 const handleSubmit = async (formData) => {
   try {
     if (isEditMode.value) {
@@ -343,7 +553,6 @@ const handleSubmit = async (formData) => {
     } else {
       await addDataFad(formData)
     }
-
     isFormOpen.value = false
     isEditMode.value = false
     resetForm()
@@ -355,15 +564,13 @@ const handleSubmit = async (formData) => {
 
 const addDataFad = async (formData) => {
   try {
-    const response = await axios.post('/api/v1/save-fad', formData)
+    const response = await api.post('/api/v1/save-fad', formData)
     if (response.status === 200) {
-      // new data should appear at the beginning -> refresh page 1
       currentPage.value = 1
       getData(1)
       alert('Data berhasil disimpan!')
-      lastUpdate()
-
       isFormOpen.value = false
+      await fetchLastUpdate()
     }
   } catch (error) {
     console.error('Terjadi kesalahan saat menyimpan data:', error)
@@ -378,15 +585,11 @@ const updateDataFad = async (formData) => {
       alert('Terjadi kesalahan: ID tidak ditemukan.')
       return
     }
-
-    console.log('Mengupdate data dengan ID:', formData.id)
-
-    const response = await axios.put(`/api/v1/update-fad/${formData.id}`, formData)
+    const response = await api.put(`/api/v1/update-fad/${formData.id}`, formData)
     if (response.status === 200) {
-      // refresh current page to reflect possible re-ordering (newest first)
       await getData(currentPage.value)
       alert('Data berhasil diperbarui!')
-      lastUpdate()
+      await fetchLastUpdate()
     }
   } catch (error) {
     console.error('Terjadi kesalahan saat memperbarui data:', error)
@@ -396,14 +599,12 @@ const updateDataFad = async (formData) => {
 
 const deleteFad = async (id) => {
   if (!confirm('Hapus data?')) return
-
   try {
-    const res = await axios.delete(`/api/v1/delete-fad/${id}`)
+    const res = await api.delete(`/api/v1/delete-fad/${id}`)
     if (res.status == 200) {
       alert('Data berhasil di hapus')
-      lastUpdate()
+      await fetchLastUpdate()
     }
-    // refresh current page after deletion
     await getData(currentPage.value)
   } catch (error) {
     console.log(error)
@@ -411,23 +612,151 @@ const deleteFad = async (id) => {
   }
 }
 
-const lastUpdate = async () => {
+/* Init */
+onMounted(() => {
+  getData(1)
+  fetchLastUpdate()
+})
+
+/* Export changelog CSV */
+const exportChangeLog = async () => {
   try {
-    const response = await axios.get('/api/v1/get-log-update')
-    if (response.status === 200) {
-      lastUpdateData.value = response.data
-      console.log('Last Update:', lastUpdateData.value.lastUpdate.timestamp) // Cek apakah data sudah benar
+    const params = {}
+    if (!exportAll.value) {
+      if (exportFrom.value) params.from = exportFrom.value
+      if (exportTo.value) params.to = exportTo.value
+    } else {
+      params.all = true
     }
-  } catch (error) {
-    console.error('Terjadi kesalahan saat mengambil data:', error)
+    const res = await api.get('/api/getChangeLog/export', { responseType: 'blob', params })
+    if (res.status === 200) {
+      const blob = new Blob([res.data], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const cd = res.headers['content-disposition'] || ''
+      const m = cd.match(/filename="?(.*?)"?$/)
+      a.download = m ? m[1] : 'change-log.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      closeMenu()
+    } else {
+      alert('Export failed')
+    }
+  } catch (err) {
+    console.error('Export error', err)
+    alert('Gagal mengekspor change log')
   }
 }
 
-// Ambil data saat komponen dimuat
-onMounted(() => {
-  getData(1)
-  lastUpdate()
-})
+const setExportTarget = (t) => {
+  exportTarget.value = t
+  closeMenu()
+  isExportOpen.value = true
+}
+
+const doExport = async () => {
+  exportError.value = ''
+  if (!exportAll.value) {
+    if (!exportFrom.value && !exportTo.value) {
+      exportError.value = 'Isi minimal salah satu tanggal atau centang All.'
+      return
+    }
+    if (exportFrom.value && exportTo.value && exportFrom.value > exportTo.value) {
+      exportError.value = 'Tanggal From tidak boleh lebih besar dari To.'
+      return
+    }
+  }
+
+  try {
+    if (exportTarget.value === 'FAD') {
+      const params = {}
+      if (!exportAll.value) {
+        if (exportFrom.value) params.from = exportFrom.value
+        if (exportTo.value) params.to = exportTo.value
+      } else {
+        params.all = true
+      }
+      const res = await api.get('/api/v1/export-fad', { responseType: 'blob', params })
+      if (res.status === 200) {
+        const blob = new Blob([res.data], { type: 'text/csv' })
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        const cd = res.headers['content-disposition'] || ''
+        const m = cd.match(/filename="?(.*?)"?$/)
+        a.download = m ? m[1] : 'fad-export.csv'
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        window.URL.revokeObjectURL(url)
+        isExportOpen.value = false
+        closeMenu()
+      } else {
+        alert('Export failed')
+      }
+    } else {
+      await exportChangeLog()
+      isExportOpen.value = false
+    }
+  } catch (err) {
+    console.error('Export failed', err)
+    alert('Gagal mengekspor')
+  }
+}
+
+/* Validasi & trigger export FAD dari popup */
+const doExportFad = async () => {
+  exportError.value = ''
+  if (!exportAll.value) {
+    if (!exportFrom.value && !exportTo.value) {
+      exportError.value = 'Isi minimal salah satu tanggal atau centang All.'
+      return
+    }
+    if (exportFrom.value && exportTo.value && exportFrom.value > exportTo.value) {
+      exportError.value = 'Tanggal From tidak boleh lebih besar dari To.'
+      return
+    }
+  }
+  await exportFad()
+  isExportOpen.value = false
+}
+
+/* Export FAD CSV (tetap gunakan state exportFrom/exportTo/exportAll) */
+const exportFad = async () => {
+  try {
+    const params = {}
+    if (!exportAll.value) {
+      if (exportFrom.value) params.from = exportFrom.value
+      if (exportTo.value) params.to = exportTo.value
+    } else {
+      params.all = true
+    }
+
+    const res = await api.get('/api/v1/export-fad', { responseType: 'blob', params })
+    if (res.status === 200) {
+      const blob = new Blob([res.data], { type: 'text/csv' })
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const cd = res.headers['content-disposition'] || ''
+      const m = cd.match(/filename="?(.*?)"?$/)
+      a.download = m ? m[1] : 'fad-export.csv'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+      closeMenu()
+    } else {
+      alert('Export failed')
+    }
+  } catch (err) {
+    console.error('Export FAD error', err)
+    alert('Gagal mengekspor data FAD')
+  }
+}
 </script>
 
 <style scoped>

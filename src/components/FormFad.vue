@@ -49,13 +49,13 @@
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           >
             <option value="A/C">A/C</option>
-            <option value="BHI">BHI</option>
+            <option value="BHIT">BHIT</option>
             <option value="DK">DK</option>
             <option value="Mixing/E">Mixing/E</option>
             <option value="TBR">TBR</option>
             <option value="LOG">LOG</option>
             <option value="HO">HO</option>
-            <option value="ENG">ENG</option>
+            <option value="ENG/UTL">ENG/UTL</option>
             <option value="JQA">JQA</option>
             <option value="GA">GA</option>
             <option value="IT/EDP">IT/EDP</option>
@@ -103,6 +103,7 @@
             v-model="form.vendor"
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           >
+            <option value="-" selected>-</option>
             <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.name">
               {{ vendor.name }}
             </option>
@@ -118,6 +119,7 @@
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           >
             <option value="Open">Open</option>
+            <option value="Hold">Hold</option>
             <option value="Closed">Closed</option>
             <option value="OnProgress">On Progress</option>
           </select>
@@ -129,6 +131,7 @@
           rows="3"
           class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           placeholder="Deskripsi"
+          maxlength="500"
         ></textarea>
       </div>
       <!-- Keterangan -->
@@ -139,6 +142,7 @@
           rows="3"
           class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           placeholder="Tambahkan keterangan"
+          maxlength="500"
         ></textarea>
       </div>
 
@@ -175,8 +179,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
-import axios from 'axios'
-
+import api from '@/stores/axios.js'
 const props = defineProps({
   initData: {
     type: Object,
@@ -269,7 +272,7 @@ const vendors = ref([])
 // Ambil data vendor dari backend
 const fetchVendors = async () => {
   try {
-    const response = await axios.get('/api/v1/get-vendor')
+    const response = await api.get('/api/v1/get-vendor')
     vendors.value = response.data.filter((vendor) => vendor.active) // Hanya vendor aktif
   } catch (error) {
     console.error('Gagal mengambil data vendor:', error)

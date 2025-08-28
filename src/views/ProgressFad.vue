@@ -94,17 +94,17 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
-import axios from 'axios'
 import NavGroup from '@/components/NavGroup.vue'
 import { useRoute } from 'vue-router'
-import { fmtDateToDDMMYYYY } from '@/utils/Helper.js'
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
+import api from '@/stores/axios'
 
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
 const route = useRoute()
 
 const dataFad = ref([])
-const currentPage = ref(1) // Halaman aktif
+const currentPage = ref(1)
 const itemsPerPage = 10
 const searchQuery = ref(route.query.q ? route.query.q : '')
 const progress = ref('onprogress')
@@ -120,10 +120,11 @@ watch(searchQuery, (val) => {
   }, 350)
 })
 
-// Client filters by status when server search is not active
-const filteredData = computed(() =>
-  dataFad.value.filter((item) => (item.status || '').toLowerCase() === progress.value),
-)
+// Client filters by status then sorts by createdAt
+const filteredData = computed(() => {
+  const list = dataFad.value.filter((item) => (item.status || '').toLowerCase() === progress.value)
+  return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+})
 
 const inputData = ref({
   noFad: '',
@@ -188,7 +189,7 @@ const prevPage = () => {
 const getData = async (page = currentPage.value) => {
   try {
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage, status: progress.value }
-    const response = await axios.get('/api/v1/get-fad', { params })
+    const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
@@ -203,8 +204,10 @@ const getData = async (page = currentPage.value) => {
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
         keterangan: item.keterangan ?? '',
+        createdAt: item.createdAt ?? null,
         id: item.id,
       }))
+
       totalItems.value = payload.meta?.total ?? rows.length
       currentPage.value = payload.meta?.page ?? Number(page)
     }

@@ -2,14 +2,59 @@
   <section class="container px-4 py-4 mx-auto">
     <!-- Header dan Tombol -->
     <div class="sm:flex sm:items-center sm:justify-between">
-      <div>
+      <div class="w-full flex items-center justify-between gap-x-3">
+        <!-- Kiri -->
         <div class="flex items-center gap-x-3">
           <h2 class="text-lg font-medium text-gray-800 dark:text-white">Monitoring FAD</h2>
           <span
             class="px-3 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full dark:bg-gray-800 dark:text-blue-400"
-            >{{ filteredData.length }} Record</span
           >
+            {{ filteredData.length }} Record
+          </span>
         </div>
+
+        <!-- Kanan -->
+        <router-link
+          v-show="authStore.user?.role === 'ADMIN'"
+          :to="{ name: 'admin' }"
+          class="flex px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+        >
+          <svg
+            class="h-5 w-5 sm:mr-2"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M3.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 17.75h5.5v5.5-5.5zM3.75 17.75h5.5v5.5-5.5z"
+            />
+          </svg>
+          Panel Admin
+        </router-link>
+        <button
+          v-show="authStore.user.role !== 'ADMIN'"
+          @click="onLogout"
+          class="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-950/40"
+          aria-label="Logout"
+        >
+          <svg
+            class="h-5 w-5 sm:mr-2"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3"
+            />
+          </svg>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
       </div>
     </div>
 
@@ -30,11 +75,11 @@
     </div>
 
     <div>
-      <h3 class="mt-2 text-lg font-semibold">Last Update</h3>
+      <p class="mt-2 text-sm font-semibold">Last Update</p>
       <template v-if="lastUpdateData">
-        <strong class="font-semibold text-gray-500 dark:text-gray-400">
+        <strong class="font-semibold text-sm text-gray-500 dark:text-gray-400">
           {{
-            lastUpdateData.lastUpdate.timestamp
+            lastUpdateData.lastUpdate?.timestamp
               ? new Date(lastUpdateData.lastUpdate.timestamp).toLocaleString()
               : 'Tidak tersedia'
           }}
@@ -142,28 +187,18 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import axios from 'axios'
 import NavGroup from '@/components/NavGroup.vue'
 import { useRouter } from 'vue-router'
 import TableClosedStat from '@/components/TableClosedStat.vue'
-import { fmtDateToDDMMYYYY } from '@/utils/Helper.js'
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/stores/axios.js'
 
+const authStore = useAuthStore()
 const router = useRouter()
 const dataFad = ref([])
 const lastUpdateData = ref()
 
-const lastUpdate = async () => {
-  try {
-    const response = await axios.get('/api/v1/get-log-update')
-    if (response.status === 200) {
-      lastUpdateData.value = response.data
-    }
-  } catch (error) {
-    console.error('Terjadi kesalahan saat mengambil data:', error)
-  }
-}
-
-// Menyimpan state apakah accordion status terbuka atau tidak
 const accordionState = ref({
   Open: false,
   OnProgress: false,
@@ -176,11 +211,20 @@ const plantAccordionState = ref({
   Closed: {},
 })
 
+const onLogout = () => {
+  try {
+    const res = authStore.logout()
+    localStorage.removeItem('user')
+    localStorage.removeItem('accessToken')
+  } catch {}
+  router.push({ name: 'login' })
+}
+
 // Normalize status to standard values used in UI
 function normalizeStatus(raw) {
   const s = String(raw ?? '').toLowerCase()
   if (!s) return ''
-  if (s.includes('open')) return 'Open'
+  if (s.includes('open') || s.includes('hold')) return 'Open'
   if (s.includes('onprogress') || s.includes('on progress') || s.includes('progress'))
     return 'OnProgress'
   if (s.includes('close') || s.includes('closed')) return 'Closed'
@@ -191,9 +235,9 @@ function normalizeStatus(raw) {
 // Fetch data per-status in parallel and normalize/map
 const getData = async () => {
   try {
-    const statuses = ['open', 'onprogress', 'closed']
+    const statuses = ['open', 'hold', 'onprogress', 'closed']
     const requests = statuses.map((s) =>
-      axios.get('/api/v1/get-fad', { params: { q: '', page: 1, limit: 1000, status: s } }),
+      api.get('/api/v1/get-fad', { params: { q: '', page: 1, limit: 1000, status: s } }),
     )
     const responses = await Promise.all(requests)
     const allRows = responses.flatMap((res) =>
@@ -210,6 +254,7 @@ const getData = async () => {
       status: normalizeStatus(item.status),
       deskripsi: item.deskripsi ?? '',
       keterangan: item.keterangan ?? '',
+      createdAt: item.createdAt ?? null,
       id: item.id,
     }))
   } catch (error) {
@@ -226,14 +271,16 @@ const filteredClosed = computed(() =>
 const headersVendor = ['No', 'Vendor', ' FAD Closed']
 const headersPlant = ['No', 'Plant', ' FAD Closed']
 
-// Filter data berdasarkan status Open, OnProgress, Closed
 const filteredData = computed(() =>
+  // normalized statuses: 'Open' already includes original 'hold' values
   dataFad.value.filter((item) => ['Open', 'OnProgress', 'Closed'].includes(item.status)),
 )
 
 // Kelompokkan data berdasarkan Plant
 const groupedDataByPlant = (status) => {
-  const filtered = filteredData.value.filter((item) => item.status === status)
+  const filtered = filteredData.value
+    .filter((item) => item.status === status)
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
   const grouped = filtered.reduce((acc, item) => {
     const plantGroup = acc.find((group) => group.plant === item.plant)
     if (plantGroup) {
@@ -280,9 +327,18 @@ const openUserGuide = () => {
 
 // Ambil data saat komponen dimuat
 onMounted(() => {
-  getData()
-  lastUpdate()
+  getData(1)
+  fetchLastUpdate()
 })
+
+const fetchLastUpdate = async () => {
+  try {
+    const res = await api.get('/api/getChangeLog', { params: { model: 'FAD', last: true } })
+    if (res.status === 200) lastUpdateData.value = res.data
+  } catch (e) {
+    console.error('Failed fetching last update:', e)
+  }
+}
 </script>
 
 <style scoped></style>

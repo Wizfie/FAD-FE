@@ -9,6 +9,15 @@ function fmtDateToDDMMYYYY(v) {
   return `${dd}/${mm}/${yyyy}`
 }
 
+function fmtDateTime(v) {
+  if (!v) return '-'
+  const m = String(v).replace(' ', 'T')
+  const d = new Date(m)
+  if (Number.isNaN(d.getTime())) return '-'
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
 // helpers.js
 
 function parseDate(v) {
@@ -102,4 +111,12 @@ const tryParseMonth = (s) => {
   return null
 }
 
-export { startOfDay, endOfDay, tryParseDate, tryParseMonth, fmtDateToDDMMYYYY, parseDate }
+export {
+  startOfDay,
+  endOfDay,
+  tryParseDate,
+  tryParseMonth,
+  fmtDateToDDMMYYYY,
+  parseDate,
+  fmtDateTime,
+}

@@ -94,8 +94,8 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
-import axios from 'axios'
 import NavGroup from '@/components/NavGroup.vue'
+import api from '@/stores/axios'
 
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
@@ -108,7 +108,9 @@ const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
 // Server-driven filtered data (backend handles search + pagination)
-const filteredData = computed(() => dataFad.value)
+const filteredData = computed(() =>
+  dataFad.value.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+)
 
 // helper: format date to DD/MM/YYYY or return '-'
 function fmtDateToDDMMYYYY(v) {
@@ -194,7 +196,7 @@ const prevPage = () => {
 const getData = async (page = currentPage.value) => {
   try {
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage }
-    const response = await axios.get('/api/v1/get-fad', { params })
+    const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
@@ -209,8 +211,10 @@ const getData = async (page = currentPage.value) => {
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
         keterangan: item.keterangan ?? '',
+        createdAt: item.createdAt ?? null,
         id: item.id,
       }))
+
       totalItems.value = payload.meta?.total ?? rows.length
       currentPage.value = payload.meta?.page ?? Number(page)
     }

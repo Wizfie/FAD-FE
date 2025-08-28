@@ -94,10 +94,10 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
-import axios from 'axios'
 import NavGroup from '@/components/NavGroup.vue'
 import { useRoute } from 'vue-router'
-import { fmtDateToDDMMYYYY } from '@/utils/Helper.js'
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
+import api from '@/stores/axios'
 
 const isFormOpen = ref(false)
 const isEditMode = ref(false)
@@ -108,6 +108,7 @@ const currentPage = ref(1) // Halaman aktif
 const itemsPerPage = 10
 const searchQuery = ref(route.query.q ? route.query.q : '')
 const open = ref('open')
+const hold = ref('hold')
 const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
@@ -120,27 +121,19 @@ watch(searchQuery, (val) => {
   }, 350)
 })
 
-// Menentukan apakah input adalah angka
-const isNumber = (str) => {
-  return !isNaN(str)
-}
-
-// Menentukan apakah input adalah tanggal
-const isDate = (str) => {
-  const regex = /^\d{4}-\d{2}-\d{2}$/ // Format tanggal: YYYY-MM-DD
-  return regex.test(str)
-}
-
-// Data for the current page comes from server; client only filters by status when no search
-const filteredData = computed(() =>
-  dataFad.value.filter((item) => (item.status || '').toLowerCase() === open.value),
-)
-
+// Data for the current page comes from server; filter first, then sort by createdAt
+const filteredData = computed(() => {
+  const list = dataFad.value.filter((item) => {
+    const s = (item.status || '').toLowerCase()
+    return s === open.value || s === hold.value
+  })
+  return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+})
 const headersFad = [
   'NO',
   'No FAD',
   'Item',
-  'plant',
+  'Plant',
   'Terima FAD',
   'Terima BBM',
   'Tanggal Serah Terima',
@@ -184,8 +177,14 @@ const prevPage = () => {
 // Fetch Data
 const getData = async (page = currentPage.value) => {
   try {
-    const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage, status: open.value }
-    const response = await axios.get('/api/v1/get-fad', { params })
+    const params = {
+      q: searchQuery.value ?? '',
+      page,
+      limit: itemsPerPage,
+      // request both open and hold statuses from server (backend supports comma-separated)
+      status: `${open.value},${hold.value}`,
+    }
+    const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
@@ -200,8 +199,10 @@ const getData = async (page = currentPage.value) => {
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
         keterangan: item.keterangan ?? '',
+        createdAt: item.createdAt ?? null,
         id: item.id,
       }))
+
       totalItems.value = payload.meta?.total ?? rows.length
       currentPage.value = payload.meta?.page ?? Number(page)
     }
