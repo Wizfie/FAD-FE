@@ -59,7 +59,21 @@ const router = createRouter({
     {
       path: '/users',
       name: 'users',
-      component: () => import('@/views/userManagement.vue'),
+      component: () => import('@/views/UserManagement.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/Gallery',
+      name: 'gallery',
+      component: () => import('@/components/DashboardWeekly.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/area/:id',
+      name: 'gallery-area',
+      component: () => import('@/components/GalleryArea.vue'),
+      props: true,
+      meta: { requiresAuth: true },
     },
   ],
 })

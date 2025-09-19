@@ -1,51 +1,108 @@
 <template>
   <section class="container px-4 py-4 mx-auto">
-    <!-- Header dan Tombol -->
-    <div class="sm:flex sm:items-center sm:justify-between">
-      <div class="w-full flex items-center justify-between gap-x-3">
-        <!-- Kiri -->
-        <div class="flex items-center gap-x-3">
-          <h2 class="text-lg font-medium text-gray-800 dark:text-white">Monitoring FAD</h2>
-          <span
-            class="px-3 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full dark:bg-gray-800 dark:text-blue-400"
-          >
-            {{ filteredData.length }} Record
-          </span>
-        </div>
+    <!-- ===== HEADER ===== -->
+    <div
+      class="sticky top-0 z-30 -mx-4 px-4 py-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur border-b border-gray-200 dark:border-gray-800 sm:static sm:bg-transparent sm:dark:bg-transparent sm:border-0 sm:backdrop-blur-0"
+    >
+      <!-- row 1: title + badge -->
+      <div class="flex items-center justify-between sm:justify-start gap-3">
+        <h2 class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white shrink-0">
+          Monitoring FAD
+        </h2>
+        <span
+          class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-bold text-blue-700 bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300"
+        >
+          {{ filteredData.length }} Record
+        </span>
 
-        <!-- Kanan -->
+        <!-- Desktop: panel admin on the far right -->
+        <div class="hidden sm:flex ml-auto items-center gap-2">
+          <router-link
+            v-show="authStore.user?.role === 'ADMIN'"
+            :to="{ name: 'admin' }"
+            class="inline-flex h-10 items-center rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            <!-- HomeIcon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-5 w-5 mr-2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75V21h6.75v-6h1.5v6H19.5V9.75"
+              />
+            </svg>
+            Panel Admin
+          </router-link>
+
+          <button
+            v-show="authStore.user.role !== 'ADMIN'"
+            @click="onLogout"
+            class="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+          >
+            <!-- ArrowRightOnRectangleIcon -->
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="h-5 w-5 mr-2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3"
+              />
+            </svg>
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <!-- row 2: actions (mobile only) -->
+      <div class="mt-3 grid grid-cols-2 gap-2 sm:hidden">
         <router-link
           v-show="authStore.user?.role === 'ADMIN'"
           :to="{ name: 'admin' }"
-          class="flex px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+          class="h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center gap-2 active:scale-[.98]"
         >
+          <!-- HomeIcon -->
           <svg
-            class="h-5 w-5 sm:mr-2"
-            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
             fill="none"
-            stroke="currentColor"
+            viewBox="0 0 24 24"
             stroke-width="1.5"
+            stroke="currentColor"
+            class="h-5 w-5"
           >
             <path
               stroke-linecap="round"
               stroke-linejoin="round"
-              d="M3.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 6.75h5.5v5.5h-5.5v-5.5zM14.75 17.75h5.5v5.5-5.5zM3.75 17.75h5.5v5.5-5.5z"
+              d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75V21h6.75v-6h1.5v6H19.5V9.75"
             />
           </svg>
-          Panel Admin
+          <span class="text-sm font-semibold">Panel Admin</span>
         </router-link>
+
         <button
           v-show="authStore.user.role !== 'ADMIN'"
           @click="onLogout"
-          class="inline-flex h-10 items-center rounded-lg px-3 text-sm font-semibold text-red-600 hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:text-red-400 dark:hover:bg-red-950/40"
-          aria-label="Logout"
+          class="h-10 rounded-xl border border-red-300 text-red-600 dark:text-red-400 flex items-center justify-center gap-2 active:scale-[.98] bg-white dark:bg-gray-900"
         >
+          <!-- ArrowRightOnRectangleIcon -->
           <svg
-            class="h-5 w-5 sm:mr-2"
-            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
             fill="none"
-            stroke="currentColor"
+            viewBox="0 0 24 24"
             stroke-width="1.5"
+            stroke="currentColor"
+            class="h-5 w-5"
           >
             <path
               stroke-linecap="round"
@@ -53,31 +110,37 @@
               d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l3 3m0 0l-3 3m3-3H3"
             />
           </svg>
-          <span class="hidden sm:inline">Logout</span>
+          <span class="text-sm font-semibold">Logout</span>
         </button>
       </div>
     </div>
 
-    <div class="my-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <!-- ===== TABS / NAV ===== -->
+    <div class="my-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div
-        class="flex flex-wrap overflow-hidden bg-white border divide-x rounded-lg dark:bg-gray-900 rtl:flex-row-reverse dark:border-gray-700 dark:divide-gray-700"
+        class="flex overflow-x-auto no-scrollbar bg-white border rounded-lg dark:bg-gray-900 dark:border-gray-700"
       >
-        <NavGroup />
+        <!-- biar konten tidak wrap di mobile -->
+        <div class="min-w-max divide-x rtl:flex-row-reverse dark:divide-gray-700">
+          <NavGroup />
+        </div>
       </div>
-      <div class="flex justify-center md:justify-end">
+
+      <div class="flex justify-stretch md:justify-end">
         <button
           @click="openUserGuide"
-          class="px-4 py-2 border border-blue-300 rounded-md font-medium hover:bg-blue-400 dark:text-white"
+          class="w-full md:w-auto px-4 py-2 border border-blue-300 rounded-md text-sm font-medium hover:bg-blue-50 dark:hover:bg-blue-900/30 dark:text-white"
         >
           User Guide
         </button>
       </div>
     </div>
 
-    <div>
-      <p class="mt-2 text-sm font-semibold">Last Update</p>
+    <!-- ===== LAST UPDATE ===== -->
+    <div class="mt-1">
+      <p class="text-sm font-semibold">Last Update</p>
       <template v-if="lastUpdateData">
-        <strong class="font-semibold text-sm text-gray-500 dark:text-gray-400">
+        <strong class="block font-medium text-sm text-gray-600 dark:text-gray-400">
           {{
             lastUpdateData.lastUpdate?.timestamp
               ? new Date(lastUpdateData.lastUpdate.timestamp).toLocaleString()
@@ -87,93 +150,101 @@
       </template>
     </div>
 
-    <!-- Kanban Columns -->
-    <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-2">
-      <!-- Wrapper untuk Open, OnProgress, dan Closed -->
+    <!-- ===== COLUMNS (kanban) ===== -->
+    <div class="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
       <div
         v-for="status in ['Open', 'OnProgress', 'Closed']"
         :key="status"
-        class="p-4 max-h-fit border-2 rounded transition-all"
+        class="p-3 sm:p-4 border rounded-xl transition-all bg-white dark:bg-gray-900 dark:border-gray-700"
       >
-        <!-- Header Status -->
-        <div
+        <!-- header status -->
+        <button
           @click="toggleAccordion(status)"
-          class="flex justify-between items-center mb-4 p-5 rounded cursor-pointer"
+          class="w-full flex items-center justify-between rounded-lg px-4 py-3 sm:py-4 text-left"
           :class="{
-            'bg-blue-200 dark:bg-blue-600 hover:border-blue-500 border-2': status === 'Open',
-            'bg-yellow-100 dark:bg-yellow-600 hover:border-yellow-500 border-2':
-              status === 'OnProgress',
-            'bg-gray-100 dark:bg-gray-600 hover:border-gray-500 border-2': status === 'Closed',
+            'bg-blue-100 dark:bg-blue-900/40': status === 'Open',
+            'bg-yellow-50 dark:bg-yellow-900/30': status === 'OnProgress',
+            'bg-gray-100 dark:bg-gray-800/60': status === 'Closed',
           }"
         >
-          <h3 class="text-xl font-semibold text-gray-800 dark:text-white">{{ status }}</h3>
-          <span class="text-lg font-bold text-gray-900 dark:text-white">
+          <span class="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">{{
+            status
+          }}</span>
+          <span class="text-sm sm:text-base font-bold text-gray-900 dark:text-white">
             {{ getStatusCount(status) }} Proyek
           </span>
-        </div>
+        </button>
 
-        <!-- Accordion Konten untuk Status Tertentu -->
-        <div v-show="isAccordionOpen(status)" class="transition-all">
-          <!-- Accordion untuk setiap plant -->
+        <!-- list per plant -->
+        <div v-show="isAccordionOpen(status)" class="mt-3 space-y-4">
           <div
             v-for="plantGroup in groupedDataByPlant(status)"
             :key="plantGroup.plant"
-            class="mb-6"
+            class="border-b border-gray-200 dark:border-gray-700 pb-3"
           >
-            <div class="border-b">
-              <!-- Accordion Header untuk Plant -->
-              <button
-                @click="togglePlantAccordion(status, plantGroup.plant)"
-                class="w-full text-left p-3 text-lg font-medium text-gray-800 dark:text-white rounded-lg shadow-sm flex justify-between"
-                :class="{
-                  'hover:bg-blue-200 dark:hover:bg-blue-600': status === 'Open',
-                  'hover:bg-yellow-100 dark:hover:bg-yellow-600': status === 'OnProgress',
-                  'hover:bg-gray-100 dark:hover:bg-gray-600': status === 'Closed',
-                }"
+            <button
+              @click="togglePlantAccordion(status, plantGroup.plant)"
+              class="w-full flex items-center justify-between px-3 py-2 rounded-md text-sm sm:text-base font-medium text-gray-800 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/60"
+            >
+              <span class="truncate"
+                >{{ plantGroup.plant }} — ({{ plantGroup.items.length }} Proyek)</span
               >
-                {{ plantGroup.plant }} - ({{ plantGroup.items.length }} Proyek)
-                <span v-if="isPlantAccordionOpen(status, plantGroup.plant)" class="ml-2">▼</span>
-                <span v-else class="ml-2">▲</span>
-              </button>
+              <!-- Chevron -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="h-5 w-5 ml-2 transition-transform"
+                :class="{ 'rotate-180': isPlantAccordionOpen(status, plantGroup.plant) }"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M19.5 8.25l-7.5 7.5-7.5-7.5"
+                />
+              </svg>
+            </button>
 
-              <!-- Accordion Content untuk Plant -->
-              <div
-                v-show="isPlantAccordionOpen(status, plantGroup.plant)"
-                class="mt-2 transition-all max-h-80 overflow-y-auto"
-              >
-                <ul class="space-y-4">
-                  <li
-                    v-for="item in plantGroup.items"
-                    :key="item.id"
-                    class="p-3 border-2 hover:shadow-md hover:transform hover:translate-y-[-10px] transition-all rounded-lg bg-gr dark:text-white"
+            <div
+              v-show="isPlantAccordionOpen(status, plantGroup.plant)"
+              class="mt-2 max-h-80 overflow-y-auto pr-1"
+            >
+              <ul class="space-y-3">
+                <li
+                  v-for="item in plantGroup.items"
+                  :key="item.id"
+                  class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 active:scale-[.995] transition"
+                  @click="redirectToSearch(item.status, item.noFad)"
+                >
+                  <p
+                    class="text-sm sm:text-base font-semibold text-gray-800 dark:text-white line-clamp-2"
                   >
-                    <div @click="redirectToSearch(item.status, item.noFad)" class="cursor-pointer">
-                      <div class="text-md font-medium text-black dark:text-white">
-                        {{ item.item }}
-                      </div>
-                      <div class="text-md text-gray-600 dark:text-gray-100">
-                        Terima FAD: {{ item.terimaFad }}
-                      </div>
-                      <div class="text-md font-medium text-gray-600 dark:text-gray-100">
-                        Vendor: {{ item.vendor }}
-                      </div>
-                      <div class="text-xl font-medium dark:text-gray-100">
-                        Deskripsi: {{ item.deskripsi }}
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
+                    {{ item.item }}
+                  </p>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    Terima FAD: <span class="font-medium">{{ item.terimaFad }}</span>
+                  </p>
+                  <p class="text-xs sm:text-sm text-gray-600 dark:text-gray-300">
+                    Vendor: <span class="font-medium">{{ item.vendor }}</span>
+                  </p>
+                  <p class="text-xs sm:text-sm text-gray-700 dark:text-gray-200 line-clamp-2">
+                    Deskripsi: {{ item.deskripsi }}
+                  </p>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
   </section>
-  <section class="container px-4 py-6 mx-auto">
-    <!-- Tabel Baru: Statistik Vendor -->
-    <div class="mt-6">
-      <h3 class="text-lg font-medium text-center text-gray-800 dark:text-white">
+
+  <!-- ===== STAT TABLE (tetap) ===== -->
+  <section class="container px-4 pb-6 pt-2 mx-auto">
+    <div class="mt-4">
+      <h3 class="text-base sm:text-lg font-semibold text-center text-gray-800 dark:text-white">
         Statistik FAD Berdasarkan Vendor dan Plant
       </h3>
       <TableClosedStat
@@ -341,4 +412,18 @@ const fetchLastUpdate = async () => {
 }
 </script>
 
-<style scoped></style>
+<style scoped>
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

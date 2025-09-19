@@ -1,47 +1,89 @@
-import { useAuthStore } from './auth'
+// stores/axios.js
 import axios from 'axios'
+import { useAuthStore } from './auth'
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL_IP,
-  timeout: 10000, // Set timeout to 10 seconds
-  withCredentials: true, // send cookies (refresh token) on cross-origin requests
+  timeout: 10000,
+  withCredentials: true,
 })
 
-api.interceptors.request.use(
-  (config) => {
-    const authStore = useAuthStore()
-    if (authStore.accessToken) {
-      config.headers.Authorization = `Bearer ${authStore.accessToken}`
-    }
+api.interceptors.request.use((config) => {
+  // ⚠️ kalau diminta skip, langsung return tanpa nambah header
+  if (config.__skipAuth) return config
 
-    return config
-  },
-  (error) => {
-    return Promise.reject(error)
-  },
-)
+  const auth = useAuthStore()
+  if (auth.accessToken) {
+    config.headers.Authorization = `Bearer ${auth.accessToken}`
+  }
+  return config
+})
 
-// Axios Interceptor
+let isRefreshing = false
+let waiters = []
+const AUTH_PATH_RE = /\/api\/(login|refresh|logout)/i
+
+function queue(cb) {
+  waiters.push(cb)
+}
+function flush(newToken) {
+  waiters.splice(0).forEach((cb) => cb(newToken))
+}
+
 api.interceptors.response.use(
-  (response) => response,
+  (res) => res,
   async (error) => {
-    if (error.response.status === 401) {
-      // Jika token kedaluwarsa
-      const authStore = useAuthStore()
+    const { config, response } = error
+    if (!response) return Promise.reject(error)
 
-      // Coba refresh token
-      try {
-        await authStore.refreshToken()
-        const newAccessToken = authStore.getAccessToken
-        error.config.headers['Authorization'] = `Bearer ${newAccessToken}`
-        return api(error.config) // Coba ulang permintaan API
-      } catch (refreshError) {
-        // authStore.logout()
-        window.location.href = '/login' // Redirect ke login
-      }
+    // 1) bukan 401 -> lempar
+    if (response.status !== 401) return Promise.reject(error)
+
+    // 2) request ini minta skip -> jangan apa2
+    if (config.__skipAuth) return Promise.reject(error)
+
+    // 3) endpoint auth sendiri -> jangan refresh; logout lokal + redirect
+    if (AUTH_PATH_RE.test(config.url || '')) {
+      const auth = useAuthStore()
+      await auth.logout({ server: false, alert: false })
+      window.location.replace('/login')
+      return Promise.reject(error)
     }
 
-    return Promise.reject(error)
+    // 4) cegah infinite retry
+    if (config.__isRetryRequest) {
+      const auth = useAuthStore()
+      await auth.logout({ server: false, alert: false })
+      window.location.replace('/login')
+      return Promise.reject(error)
+    }
+
+    // 5) single-flight refresh
+    const auth = useAuthStore()
+    if (!isRefreshing) {
+      isRefreshing = true
+      const ok = await auth.refreshToken() // method di store (pakai flag skip)
+      isRefreshing = false
+
+      if (!ok) {
+        await auth.logout({ server: false, alert: false })
+        window.location.replace('/login')
+        return Promise.reject(error)
+      }
+      flush(auth.getAccessToken)
+    }
+
+    return new Promise((resolve, reject) => {
+      queue((newToken) => {
+        try {
+          config.headers['Authorization'] = `Bearer ${newToken}`
+          config.__isRetryRequest = true
+          resolve(api(config))
+        } catch (e) {
+          reject(e)
+        }
+      })
+    })
   },
 )
 
