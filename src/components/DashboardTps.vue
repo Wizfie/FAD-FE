@@ -8,6 +8,7 @@ const errorMsg = ref('')
 const weekAnchor = ref(new Date()) // tanggal acuan minggu aktif
 const cards = ref([])
 const isModalOpen = ref(false)
+const areas = ref([])
 
 // ===== utils tanggal =====
 function toISODate(d) {
@@ -107,12 +108,12 @@ async function load() {
   errorMsg.value = ''
   try {
     const { data: areaRes } = await api.get('/api/areas')
-    const areas = areaRes.data ?? []
+    areas.value = areaRes.data ?? []
 
     const nowISO = toISODate(weekAnchor.value) // pakai Senin minggu aktif juga OK
     const prevISO = toISODate(addDays(weekAnchor.value, -7)) // minggu sebelumnya
 
-    const promises = areas.map(async (a) => {
+    const promises = areas.value.map(async (a) => {
       const { data: weekRes } = await api.get('/api/photos', {
         params: { areaId: a.id, period: 'week', date: nowISO, page: 1, pageSize: 1 },
       })
@@ -146,6 +147,23 @@ async function load() {
 }
 
 onMounted(load)
+
+// Handle submit from ModalFileInput
+async function handleSubmit(formData) {
+  try {
+    // use axios instance imported as api
+    const resp = await api.post('/api/photos', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    // success => refresh
+    isModalOpen.value = false
+    await load()
+    return resp.data
+  } catch (e) {
+    console.error('Upload failed', e)
+    throw e
+  }
+}
 </script>
 
 <template>

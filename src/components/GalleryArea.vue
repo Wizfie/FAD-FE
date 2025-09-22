@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/stores/axios'
+import GroupCompare from './GroupCompare.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -22,6 +23,9 @@ const period = ref('week') // 'day' | 'week' | 'month'
 const anchor = ref(new Date()) // acuan tanggal
 const page = ref(1)
 const pageSize = ref(48)
+// category filter and optional selected comparison group
+const category = ref('') // '', 'before','action','after'
+const selectedGroup = ref('')
 
 // utils tanggal
 function addDays(d, n) {
@@ -53,6 +57,9 @@ function fmtDT(iso) {
 // month & weeks
 const month = ref(anchor.value.getMonth())
 const year = ref(anchor.value.getFullYear())
+const groups = ref([])
+const showGroupCompare = ref(false)
+const currentGroup = ref(null)
 
 function startOfMonth(y, m) {
   return new Date(y, m, 1)
@@ -106,6 +113,8 @@ async function load(resetPage = true) {
         areaId: areaId.value,
         period: period.value,
         date: toISO(anchor.value),
+        category: category.value || undefined,
+        comparisonGroupId: selectedGroup.value || undefined,
         page: page.value,
         pageSize: pageSize.value,
       },
@@ -129,7 +138,7 @@ async function removePhoto(id) {
 }
 
 // watchers
-watch([period, () => areaId.value], () => load(true))
+watch([period, () => areaId.value, category, selectedGroup], () => load(true))
 watch([month, year], () => {
   anchor.value = startOfMonth(year.value, month.value)
   load(true)
@@ -140,7 +149,27 @@ onMounted(() => {
   month.value = anchor.value.getMonth()
   year.value = anchor.value.getFullYear()
   load(true)
+  loadGroups()
 })
+
+async function loadGroups() {
+  try {
+    const { data } = await api.get('/api/comparison-groups', { params: { areaId: areaId.value } })
+    groups.value = data.items ?? data.data?.items ?? data
+  } catch (e) {
+    console.warn('Failed load groups', e)
+  }
+}
+
+async function fetchGroup(id) {
+  try {
+    const { data } = await api.get(`/api/comparison-groups/${id}`)
+    currentGroup.value = data
+    showGroupCompare.value = true
+  } catch (e) {
+    console.error('failed fetch group', e)
+  }
+}
 
 // helpers UI
 function pickWeek(w) {
@@ -150,6 +179,15 @@ function pickWeek(w) {
 function isActiveWeek(w) {
   const s = startOfWeekMonday(anchor.value)
   return s >= w.start && s <= w.end
+}
+
+function categoryLabel(cat) {
+  if (!cat) return ''
+  const v = String(cat).toLowerCase()
+  if (v === 'before') return 'Sebelum'
+  if (v === 'action') return 'Aksi'
+  if (v === 'after') return 'Sesudah'
+  return cat
 }
 
 // pagination
@@ -204,6 +242,61 @@ async function nextPage() {
 
         <!-- Month + week chips -->
         <template v-if="period !== 'day'">
+          <!-- Filter kategori -->
+          <div class="flex items-center gap-2">
+            <button
+              @click="category = ''"
+              :class="category === '' ? 'bg-black text-white' : ''"
+              class="border px-2 py-1 text-sm rounded"
+            >
+              Semua
+            </button>
+            <button
+              @click="category = 'before'"
+              :class="category === 'before' ? 'bg-black text-white' : ''"
+              class="border px-2 py-1 text-sm rounded"
+            >
+              Sebelum
+            </button>
+            <button
+              @click="category = 'action'"
+              :class="category === 'action' ? 'bg-black text-white' : ''"
+              class="border px-2 py-1 text-sm rounded"
+            >
+              Aksi
+            </button>
+            <button
+              @click="category = 'after'"
+              :class="category === 'after' ? 'bg-black text-white' : ''"
+              class="border px-2 py-1 text-sm rounded"
+            >
+              Sesudah
+            </button>
+          </div>
+
+          <!-- Selector grup (memuat grup) -->
+          <select v-model.number="selectedGroup" class="border rounded px-2 py-1 text-sm">
+            <option value="">(Semua grup)</option>
+            <option v-for="g in groups" :key="g.id" :value="g.id">
+              {{ g.title || 'Group ' + g.id }}
+            </option>
+          </select>
+          <button
+            v-if="selectedGroup"
+            class="border px-3 py-1 rounded text-sm"
+            @click="fetchGroup(selectedGroup)"
+          >
+            Bandingkan
+          </button>
+          <!-- group chips quick access -->
+          <div class="flex gap-2 ml-2">
+            <template v-for="g in groups" :key="g.id">
+              <button class="border px-2 py-1 rounded text-xs" @click="fetchGroup(g.id)">
+                {{ g.title || 'Grup ' + g.id }}
+                <span class="text-gray-500">({{ g._count?.photos || g.photoCount || '-' }})</span>
+              </button>
+            </template>
+          </div>
           <select v-model.number="month" class="border rounded px-2 py-1 text-sm">
             <option v-for="m in 12" :key="m - 1" :value="m - 1">
               {{ new Date(2000, m - 1, 1).toLocaleString(undefined, { month: 'long' }) }}
@@ -215,7 +308,7 @@ async function nextPage() {
             </option>
           </select>
 
-          <!-- Minggu chips untuk period=week -->
+          <!-- Pilihan minggu untuk period=week -->
           <div v-if="period === 'week'" class="flex flex-wrap gap-2">
             <button
               v-for="w in weeks"
@@ -258,7 +351,8 @@ async function nextPage() {
         </a>
         <div class="p-2 text-xs text-gray-600">
           <div>{{ p.area?.name || '—' }}</div>
-          <div>{{ fmtDT(p.createdAt) }}</div>
+          <div>{{ categoryLabel(p.category) }} • {{ fmtDT(p.takenAt || p.createdAt) }}</div>
+          <div v-if="p.keterangan" class="text-gray-700 mt-1">{{ p.keterangan }}</div>
         </div>
         <div class="p-2 pt-0 flex justify-end">
           <button class="text-red-600 text-xs border px-2 py-1 rounded" @click="removePhoto(p.id)">
@@ -279,4 +373,25 @@ async function nextPage() {
       </button>
     </div>
   </section>
+  <div
+    v-if="showGroupCompare"
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white w-full max-w-6xl rounded p-4">
+      <GroupCompare
+        :group="currentGroup"
+        @close="showGroupCompare = false"
+        @add="
+          (g) => {
+            router.push({
+              name: 'gallery-area',
+              params: { id: g.areaId },
+              query: { area: g.area?.name },
+            })
+            showGroupCompare = false
+          }
+        "
+      />
+    </div>
+  </div>
 </template>

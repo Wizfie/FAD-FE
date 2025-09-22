@@ -2,3 +2,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Show not-allowed cursor on disabled form controls and elements marked as disabled */
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled,
+[disabled],
+[aria-disabled='true'],
+.is-disabled {
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+/* When hovering over disabled elements, keep the not-allowed cursor */
+button:disabled:hover,
+[aria-disabled='true']:hover,
+.is-disabled:hover {
+  cursor: not-allowed !important;
+}

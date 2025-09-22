@@ -138,16 +138,7 @@
 
     <!-- ===== LAST UPDATE ===== -->
     <div class="mt-1">
-      <p class="text-sm font-semibold">Last Update</p>
-      <template v-if="lastUpdateData">
-        <strong class="block font-medium text-sm text-gray-600 dark:text-gray-400">
-          {{
-            lastUpdateData.lastUpdate?.timestamp
-              ? new Date(lastUpdateData.lastUpdate.timestamp).toLocaleString()
-              : 'Tidak tersedia'
-          }}
-        </strong>
-      </template>
+      <LastUpdate ref="lastUpdate" />
     </div>
 
     <!-- ===== COLUMNS (kanban) ===== -->
@@ -264,12 +255,12 @@ import TableClosedStat from '@/components/TableClosedStat.vue'
 import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/stores/axios.js'
+import LastUpdate from '@/components/LastUpdate.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const dataFad = ref([])
-const lastUpdateData = ref()
-
+const lastUpdateRef = ref(null)
 const accordionState = ref({
   Open: false,
   OnProgress: false,
@@ -343,7 +334,6 @@ const headersVendor = ['No', 'Vendor', ' FAD Closed']
 const headersPlant = ['No', 'Plant', ' FAD Closed']
 
 const filteredData = computed(() =>
-  // normalized statuses: 'Open' already includes original 'hold' values
   dataFad.value.filter((item) => ['Open', 'OnProgress', 'Closed'].includes(item.status)),
 )
 
@@ -396,20 +386,9 @@ const openUserGuide = () => {
   window.open(userGuideUrl, '_blank')
 }
 
-// Ambil data saat komponen dimuat
 onMounted(() => {
   getData(1)
-  fetchLastUpdate()
 })
-
-const fetchLastUpdate = async () => {
-  try {
-    const res = await api.get('/api/getChangeLog', { params: { model: 'FAD', last: true } })
-    if (res.status === 200) lastUpdateData.value = res.data
-  } catch (e) {
-    console.error('Failed fetching last update:', e)
-  }
-}
 </script>
 
 <style scoped>

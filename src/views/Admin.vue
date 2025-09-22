@@ -482,16 +482,7 @@
         />
       </div>
       <div class="mt-3 md:mt-0">
-        <p class="text-sm font-semibold">Last Update</p>
-        <template v-if="lastUpdateData">
-          <strong class="font-semibold text-sm text-gray-500 dark:text-gray-400">
-            {{
-              lastUpdateData.lastUpdate?.timestamp
-                ? new Date(lastUpdateData.lastUpdate.timestamp).toLocaleString()
-                : 'Tidak tersedia'
-            }}
-          </strong>
-        </template>
+        <LastUpdate ref="lastUpdate" />
       </div>
     </div>
 
@@ -602,6 +593,7 @@ import { useRouter } from 'vue-router'
 import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 import api from '@/stores/axios.js'
 import { useAuthStore } from '@/stores/auth.js'
+import LastUpdate from '@/components/LastUpdate.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -611,7 +603,7 @@ const isEditMode = ref(false)
 const isAddOpen = ref(false) // desktop dropdown
 const isSheetOpen = ref(false) // mobile sheet
 
-const lastUpdateData = ref()
+const lastUpdateRef = ref(null)
 
 const exportFrom = ref('')
 const exportTo = ref('')
@@ -790,16 +782,6 @@ const prevPage = () => {
   }
 }
 
-/* Last update */
-const fetchLastUpdate = async () => {
-  try {
-    const res = await api.get('/api/getChangeLog', { params: { model: 'FAD', last: true } })
-    if (res.status === 200) lastUpdateData.value = res.data
-  } catch (e) {
-    console.error('Failed fetching last update:', e)
-  }
-}
-
 /* Data */
 const getData = async (page = currentPage.value) => {
   try {
@@ -856,7 +838,7 @@ const addDataFad = async (formData) => {
       getData(1)
       alert('Data berhasil disimpan!')
       isFormOpen.value = false
-      await fetchLastUpdate()
+      await lastUpdateRef.value.fetchLastUpdate()
     }
   } catch (error) {
     console.error('Terjadi kesalahan saat menyimpan data:', error)
@@ -875,7 +857,7 @@ const updateDataFad = async (formData) => {
     if (response.status === 200) {
       await getData(currentPage.value)
       alert('Data berhasil diperbarui!')
-      await fetchLastUpdate()
+      await lastUpdateRef.value.fetchLastUpdate()
     }
   } catch (error) {
     console.error('Terjadi kesalahan saat memperbarui data:', error)
@@ -889,7 +871,7 @@ const deleteFad = async (id) => {
     const res = await api.delete(`/api/v1/delete-fad/${id}`)
     if (res.status == 200) {
       alert('Data berhasil di hapus')
-      await fetchLastUpdate()
+      await lastUpdateRef.value.fetchLastUpdate()
     }
     await getData(currentPage.value)
   } catch (error) {
@@ -901,7 +883,6 @@ const deleteFad = async (id) => {
 /* Init */
 onMounted(() => {
   getData(1)
-  fetchLastUpdate()
 })
 
 /* Export changelog CSV */

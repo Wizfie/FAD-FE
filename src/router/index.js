@@ -65,7 +65,7 @@ const router = createRouter({
     {
       path: '/Gallery',
       name: 'gallery',
-      component: () => import('@/components/DashboardWeekly.vue'),
+      component: () => import('@/components/DashboardTps.vue'),
       meta: { requiresAuth: true },
     },
     {
