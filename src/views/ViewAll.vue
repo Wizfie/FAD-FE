@@ -4,7 +4,9 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <div>
         <div class="flex items-center gap-x-3">
-          <h2 class="text-lg font-medium text-gray-800 dark:text-white">Monitoring FAD</h2>
+          <h2 class="text-lg font-medium text-gray-800 dark:text-white">
+            Dashboard FAD - All Data
+          </h2>
           <span
             class="px-3 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full dark:bg-gray-800 dark:text-blue-400"
             >{{ totalItems }} Record</span
@@ -66,12 +68,6 @@
       @updatePrev="prevPage"
     />
 
-    <!-- Total Pages Information -->
-    <div class="mt-2 text-md text-gray-500 dark:text-gray-400">
-      Showing page <span class="font-bold">{{ currentPage }}</span> of
-      <span class="font-bold">{{ totalPages }}</span> pages
-    </div>
-
     <!-- Form Slide-In -->
     <div
       class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
@@ -107,23 +103,15 @@ const searchQuery = ref('')
 const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
-// Server-driven filtered data (backend handles search + pagination)
+// Data terfilter dari server (backend handle search + pagination)
 const filteredData = computed(() =>
   dataFad.value.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
 )
 
-// helper: format date to DD/MM/YYYY or return '-'
-function fmtDateToDDMMYYYY(v) {
-  if (!v) return '-'
-  const d = new Date(v)
-  if (isNaN(d.getTime())) return '-'
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  return `${dd}/${mm}/${yyyy}`
-}
+// Import fmtDateToDDMMYYYY dari helper untuk hindari duplikasi
+import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 
-// debounce timer for search
+// debounce timer untuk search
 let searchTimer = null
 watch(searchQuery, (val) => {
   clearTimeout(searchTimer)
@@ -192,7 +180,7 @@ const prevPage = () => {
   }
 }
 
-// Fetch Data (server-side search + pagination)
+// Ambil Data (server-side search + pagination)
 const getData = async (page = currentPage.value) => {
   try {
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage }
@@ -229,15 +217,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-/* Animasi slide-in */
-.transform {
-  transition: transform 0.3s ease-in-out;
-}
-.translate-x-0 {
-  transform: translateX(0);
-}
-.translate-x-full {
-  transform: translateX(100%);
-}
-</style>
+<!-- Custom transform classes replaced with Tailwind: transform transition-transform duration-300 ease-in-out translate-x-0 translate-x-full -->

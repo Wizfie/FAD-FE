@@ -7,7 +7,19 @@ const router = createRouter({
     {
       path: '/',
       name: 'dashboard',
-      component: () => import('@/views/Dashboard.vue'),
+      component: () => import('@/views/DashboardSelect.vue'), // Temporary component, will be redirected by guard
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/dashboard-select',
+      name: 'dashboard-select',
+      component: () => import('@/views/DashboardSelect.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['INTERNAL'] },
+    },
+    {
+      path: '/dashboard-fad',
+      name: 'dashboard-fad',
+      component: () => import('@/views/DashboardFad.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -51,6 +63,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/hold',
+      name: 'HoldView',
+      component: () => import('@/views/HoldFad.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/vendor',
       name: 'vendor',
       component: () => import('@/views/Vendor.vue'),
@@ -59,21 +77,26 @@ const router = createRouter({
     {
       path: '/users',
       name: 'users',
-      component: () => import('@/views/UserManagement.vue'),
+      component: () => import('@/views/userManagement.vue'),
       meta: { requiresAuth: true },
     },
     {
-      path: '/Gallery',
-      name: 'gallery',
-      component: () => import('@/components/DashboardTps.vue'),
-      meta: { requiresAuth: true },
+      path: '/tps',
+      name: 'dashboard-tps',
+      component: () => import('@/views/DashboardTps.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
     },
     {
-      path: '/area/:id',
-      name: 'gallery-area',
-      component: () => import('@/components/GalleryArea.vue'),
-      props: true,
-      meta: { requiresAuth: true },
+      path: '/tps/area/:id',
+      name: 'area-detail',
+      component: () => import('@/views/AreaDetail.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+    },
+    {
+      path: '/tps/area/:areaId/groups/:groupId',
+      name: 'group-detail',
+      component: () => import('@/views/GroupDetail.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
     },
   ],
 })
@@ -81,14 +104,35 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
 
-  // If the route requires authentication
+  // Jika route membutuhkan authentication
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    return next({ name: 'login' }) // Redirect to login if not logged in
+    return next({ name: 'login' }) // Redirect ke login jika belum login
   }
 
-  // Check if the route has a specific role requirement
+  // Handle dashboard redirect logic berdasarkan user role
+  if (to.name === 'dashboard' && authStore.isLoggedIn) {
+    const userRole = authStore.user?.role
+
+    if (userRole === 'ADMIN') {
+      // Admin langsung ke admin panel
+      return next({ name: 'admin' })
+    } else if (userRole === 'EXTERNAL') {
+      // External hanya bisa akses FAD
+      return next({ name: 'dashboard-fad' })
+    } else if (userRole === 'INTERNAL') {
+      // Internal bisa pilih FAD atau TPS
+      return next({ name: 'dashboard-select' })
+    }
+  }
+
+  // Cek jika route memiliki specific role requirement
   if (to.meta.role && to.meta.role !== authStore.user.role) {
-    return next({ name: 'dashboard' }) // Redirect to dashboard if user doesn't have required role
+    return next({ name: 'dashboard' }) // Redirect ke dashboard jika user tidak punya required role
+  }
+
+  // Cek jika route memiliki allowed roles requirement
+  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(authStore.user.role)) {
+    return next({ name: 'dashboard' }) // Redirect ke dashboard jika user tidak punya required role
   }
 
   next()

@@ -4,9 +4,7 @@
     <div class="sm:flex sm:items-center sm:justify-between">
       <div>
         <div class="flex items-center gap-x-3">
-          <h2 class="text-lg font-medium text-gray-800 dark:text-white">
-            Dashboard FAD - On Progress
-          </h2>
+          <h2 class="text-lg font-medium text-gray-800 dark:text-white">Dashboard FAD - Hold</h2>
           <span
             class="px-3 py-1 text-xs font-bold text-blue-600 bg-blue-100 rounded-full dark:bg-gray-800 dark:text-blue-400"
             >{{ totalItems }} Record</span
@@ -54,12 +52,10 @@
       :body-data="filteredData"
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
-      :edit-table="editRow"
-      :delete-table="deleteFad"
       :show-action="false"
     />
 
-    <!-- Pagination Component -->
+    <!-- Pagination -->
     <Pagination
       :currentPage="currentPage"
       :total-pages="totalPages"
@@ -67,48 +63,27 @@
       @updateNext="nextPage"
       @updatePrev="prevPage"
     />
-
-    <!-- Form Slide-In -->
-    <div
-      class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
-      :class="{ 'translate-x-0': isFormOpen, 'translate-x-full': !isFormOpen }"
-    >
-      <!-- Menggunakan Komponen FormFad -->
-      <FormFad
-        :isFormOpen="isFormOpen"
-        @toggle-form="toggleForm"
-        :init-data="inputData"
-        :is-edit-mode="isEditMode"
-        @submit-form="handleSubmit"
-      />
-    </div>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
-import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
 import NavGroup from '@/components/NavGroup.vue'
-import { useRoute } from 'vue-router'
 import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
-import api from '@/stores/axios'
-
-const isFormOpen = ref(false)
-const isEditMode = ref(false)
-const route = useRoute()
+import api from '@/stores/axios.js'
 
 const dataFad = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 10
-const searchQuery = ref(route.query.q ? route.query.q : '')
-const progress = ref('onprogress')
+const searchQuery = ref('')
 const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
+// Debounced search
 let searchTimer = null
-watch(searchQuery, (val) => {
+watch(searchQuery, () => {
   clearTimeout(searchTimer)
   searchTimer = setTimeout(() => {
     currentPage.value = 1
@@ -116,25 +91,12 @@ watch(searchQuery, (val) => {
   }, 350)
 })
 
-// Client filter by status kemudian sort by createdAt
-const filteredData = computed(() => {
-  const list = dataFad.value.filter((item) => (item.status || '').toLowerCase() === progress.value)
-  return list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-})
-
-const inputData = ref({
-  noFad: '',
-  item: '',
-  plant: '',
-  terimaFad: '',
-  terimaBbm: '',
-  bast: '',
-  vendor: '',
-  status: '',
-  deskripsi: '',
-  keterangan: '',
-  id: '',
-})
+// Filtered data hanya untuk status Hold - difilter di sisi client juga untuk memastikan
+const filteredData = computed(() =>
+  dataFad.value
+    .filter((item) => item.status === 'Hold')
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
+)
 
 const headers = [
   'NO',
@@ -150,30 +112,17 @@ const headers = [
   'Keterangan',
 ]
 
-// Toggle form
-const toggleForm = () => {
-  if (isFormOpen.value && isEditMode.value) {
-    resetForm()
-    isEditMode.value = false
-  }
-  isFormOpen.value = !isFormOpen.value
-}
-
-// Mengupdate halaman saat tombol pagination diklik
+// Pagination
 const updatePage = (newPage) => {
   currentPage.value = newPage
   getData(newPage)
 }
-
-// Fungsi untuk tombol Next
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++
     getData(currentPage.value)
   }
 }
-
-// Fungsi untuk tombol Previous
 const prevPage = () => {
   if (currentPage.value > 1) {
     currentPage.value--
@@ -181,10 +130,15 @@ const prevPage = () => {
   }
 }
 
-// Ambil Data (server-side search + pagination)
+// Ambil data - hanya data dengan status Hold
 const getData = async (page = currentPage.value) => {
   try {
-    const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage, status: progress.value }
+    const params = {
+      q: searchQuery.value ?? '',
+      page,
+      limit: itemsPerPage,
+      status: 'Hold', // Filter khusus untuk status Hold
+    }
     const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
       const payload = response.data
@@ -212,10 +166,8 @@ const getData = async (page = currentPage.value) => {
   }
 }
 
-// Ambil data saat komponen dimuat
+// Init
 onMounted(() => {
   getData(1)
 })
 </script>
-
-<style scoped></style>

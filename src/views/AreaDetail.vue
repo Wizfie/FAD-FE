@@ -1,0 +1,784 @@
+<template>
+  <div class="p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
+    <!-- Header -->
+    <div class="mb-6">
+      <div class="flex items-center gap-3 mb-2">
+        <button @click="goBack" class="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            ></path>
+          </svg>
+        </button>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ areaName || 'Area Detail' }}
+        </h1>
+      </div>
+      <p class="text-gray-600 dark:text-gray-400">Monitoring 5R - {{ monthLabel }}</p>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Grup</h3>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white">
+          {{ comparisonGroups.length }}
+        </p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Grup Selesai</h3>
+        <p class="text-2xl font-bold text-green-600">{{ completedGroupsCount }}</p>
+      </div>
+      <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Progress</h3>
+        <p class="text-2xl font-bold text-blue-600">{{ completionPercentage }}%</p>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3">
+        <!-- Month Filter -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bulan:</label>
+          <select
+            v-model="selectedMonth"
+            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Semua Bulan</option>
+            <option v-for="month in availableMonths" :key="month.value" :value="month.value">
+              {{ month.label }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Year Filter -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tahun:</label>
+          <select
+            v-model="selectedYear"
+            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Semua Tahun</option>
+            <option v-for="year in availableYears" :key="year" :value="year">
+              {{ year }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="flex items-center gap-2">
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
+          <select
+            v-model="selectedStatus"
+            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="all">Semua</option>
+            <option value="completed">Selesai</option>
+            <option value="in-progress">In Progress</option>
+            <option value="not-started">Belum Mulai</option>
+          </select>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+          <button
+            @click="viewMode = 'grid'"
+            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
+            class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            @click="viewMode = 'list'"
+            :class="viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
+            class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 10h16M4 14h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Add Group Button -->
+      <button
+        @click="openAddGroupModal"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          ></path>
+        </svg>
+        Tambah Grup Baru
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-12">
+      <div
+        class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"
+      ></div>
+      <p class="text-gray-500 dark:text-gray-400">Memuat data grup...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="errorMsg" class="text-center py-12">
+      <div class="text-red-400 mb-4">
+        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Error</h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMsg }}</p>
+      <button
+        @click="loadData"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        Coba Lagi
+      </button>
+    </div>
+
+    <!-- Comparison Groups -->
+    <div v-else>
+      <!-- Groups Display -->
+      <div v-if="filteredGroups.length > 0">
+        <!-- Grid View -->
+        <div
+          v-if="viewMode === 'grid'"
+          class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+        >
+          <div
+            v-for="group in filteredGroups"
+            :key="group.id"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
+            @click="navigateToGroup(group.id)"
+          >
+            <!-- Card Header -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+              <div class="flex justify-between items-start mb-2">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                  {{ group.title || `Grup ${group.id}` }}
+                </h3>
+                <span
+                  class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ml-2"
+                  :class="getGroupStatusClass(group)"
+                >
+                  {{ getGroupStatusText(group) }}
+                </span>
+              </div>
+              <p
+                v-if="group.description"
+                class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2"
+              >
+                {{ group.description }}
+              </p>
+
+              <!-- Progress Bar -->
+              <div class="mt-3">
+                <div class="flex justify-between items-center mb-1">
+                  <span class="text-xs text-gray-500 dark:text-gray-400">Progress</span>
+                  <span class="text-xs font-medium text-gray-700 dark:text-gray-300"
+                    >{{ getGroupPhotoCount(group) }}/3</span
+                  >
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                  <div
+                    class="bg-blue-600 h-1.5 rounded-full transition-all"
+                    :style="{ width: `${getGroupProgressPercentage(group)}%` }"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Photo Thumbnails -->
+            <div class="p-4">
+              <div class="grid grid-cols-3 gap-2">
+                <div
+                  v-for="category in ['BEFORE', 'ACTION', 'AFTER']"
+                  :key="category"
+                  class="aspect-square rounded-md overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center"
+                >
+                  <img
+                    v-if="getPhotoByCategory(group.photos, category)"
+                    :src="
+                      getPhotoByCategory(group.photos, category).thumbUrl ||
+                      getPhotoByCategory(group.photos, category).url
+                    "
+                    :alt="getCategoryText(category)"
+                    class="w-full h-full object-cover"
+                  />
+                  <div v-else class="text-gray-400 dark:text-gray-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 4v16m8-8H4"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Category Labels -->
+              <div class="grid grid-cols-3 gap-2 mt-2">
+                <span class="text-xs text-center text-gray-500 dark:text-gray-400">Before</span>
+                <span class="text-xs text-center text-gray-500 dark:text-gray-400">Action</span>
+                <span class="text-xs text-center text-gray-500 dark:text-gray-400">After</span>
+              </div>
+            </div>
+
+            <!-- View Details Indicator -->
+            <div class="px-4 pb-3 flex justify-center">
+              <svg
+                class="w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                ></path>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div v-else class="space-y-4">
+          <div
+            v-for="group in filteredGroups"
+            :key="group.id"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow-md"
+          >
+            <!-- List Item Header -->
+            <div
+              class="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+              @click="navigateToGroup(group.id)"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ group.title || `Grup ${group.id}` }}
+                    </h3>
+                    <span
+                      class="px-2 py-1 rounded-full text-xs font-medium"
+                      :class="getGroupStatusClass(group)"
+                    >
+                      {{ getGroupStatusText(group) }}
+                    </span>
+                  </div>
+                  <p v-if="group.description" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {{ group.description }}
+                  </p>
+
+                  <!-- Progress Bar -->
+                  <div class="mt-2 flex items-center gap-3">
+                    <div class="flex-1">
+                      <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          class="bg-blue-600 h-2 rounded-full transition-all"
+                          :style="{ width: `${getGroupProgressPercentage(group)}%` }"
+                        ></div>
+                      </div>
+                    </div>
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                      >{{ getGroupPhotoCount(group) }}/3</span
+                    >
+                    <svg
+                      class="w-5 h-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M9 5l7 7-7 7"
+                      ></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty States -->
+    <div v-if="comparisonGroups.length === 0" class="text-center py-12">
+      <div class="text-gray-400 dark:text-gray-600 mb-4">
+        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Belum ada grup dokumentasi
+      </h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">
+        Mulai dokumentasi 5R dengan membuat grup perbandingan pertama
+      </p>
+      <button
+        @click="openAddGroupModal"
+        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+      >
+        Buat Grup Pertama
+      </button>
+    </div>
+
+    <div
+      v-else-if="comparisonGroups.length > 0 && filteredGroups.length === 0"
+      class="text-center py-12"
+    >
+      <div class="text-gray-400 dark:text-gray-600 mb-4">
+        <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+          ></path>
+        </svg>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
+        Tidak ada grup yang sesuai filter
+      </h3>
+      <p class="text-gray-500 dark:text-gray-400 mb-6">
+        Coba ubah filter periode atau status untuk melihat grup lainnya
+      </p>
+      <button
+        @click="resetFilters"
+        class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
+      >
+        Reset Filter
+      </button>
+    </div>
+
+    <!-- Add Group Modal -->
+    <AddGroupModal
+      :isOpen="showAddGroupModal"
+      :areaId="areaId"
+      @close="closeAddGroupModal"
+      @created="handleGroupCreated"
+    />
+
+    <!-- Photo Lightbox -->
+    <PhotoLightbox
+      :isOpen="showLightbox"
+      :photos="lightboxPhotos"
+      :initialPhotoIndex="lightboxInitialIndex"
+      :groupInfo="lightboxGroupInfo"
+      @close="closeLightbox"
+    />
+  </div>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import PhotoSlot from '@/components/PhotoSlot.vue'
+import AddGroupModal from '@/components/AddGroupModal.vue'
+import PhotoLightbox from '@/components/PhotoLightbox.vue'
+import { useModal } from '@/composables/useModal'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/stores/axios.js'
+
+const route = useRoute()
+const router = useRouter()
+
+// Data states
+const comparisonGroups = ref([])
+const loading = ref(false)
+const errorMsg = ref('')
+
+// Auth
+const auth = useAuthStore()
+const canEdit = computed(() => auth.user?.role === 'ADMIN')
+
+// Edit states (removed - now handled in GroupDetail.vue)
+
+// View and Filter states
+const viewMode = ref('grid') // 'grid' or 'list'
+const selectedMonth = ref('all') // 'all', '1', '2', ..., '12'
+const selectedYear = ref('all') // 'all', '2025', '2024', etc.
+const selectedStatus = ref('all') // 'all', 'completed', 'in-progress', 'not-started'
+
+// Lightbox states
+const showLightbox = ref(false)
+const lightboxPhotos = ref([])
+const lightboxInitialIndex = ref(0)
+const lightboxGroupInfo = ref(null)
+
+// Modal states
+const { isOpen: showAddGroupModal, open: openAddGroupModal, close: closeAddGroupModal } = useModal()
+
+// Route params
+const areaId = computed(() => Number(route.params.id))
+const areaName = computed(() => route.query.name)
+
+// Computed properties
+const monthLabel = computed(() => {
+  const date = new Date()
+  return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+})
+
+// Generate available months
+const availableMonths = computed(() => {
+  const months = [
+    { value: '1', label: 'Januari' },
+    { value: '2', label: 'Februari' },
+    { value: '3', label: 'Maret' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'Mei' },
+    { value: '6', label: 'Juni' },
+    { value: '7', label: 'Juli' },
+    { value: '8', label: 'Agustus' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'Oktober' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'Desember' },
+  ]
+  return months
+})
+
+// Generate available years (current year and previous 2 years)
+const availableYears = computed(() => {
+  const years = []
+  const currentYear = new Date().getFullYear()
+
+  for (let i = 0; i < 3; i++) {
+    years.push(currentYear - i)
+  }
+
+  return years
+})
+
+const completedGroupsCount = computed(() => {
+  return comparisonGroups.value.filter((group) => isGroupComplete(group)).length
+})
+
+const completionPercentage = computed(() => {
+  if (comparisonGroups.value.length === 0) return 0
+  return Math.round((completedGroupsCount.value / comparisonGroups.value.length) * 100)
+})
+
+const filteredGroups = computed(() => {
+  let filtered = [...comparisonGroups.value]
+
+  // Filter by month and year
+  filtered = filtered.filter((group) => {
+    const groupDate = new Date(group.createdAt)
+    const groupMonth = groupDate.getMonth() + 1 // getMonth() returns 0-11
+    const groupYear = groupDate.getFullYear()
+
+    // Filter by month
+    if (selectedMonth.value !== 'all' && groupMonth !== Number(selectedMonth.value)) {
+      return false
+    }
+
+    // Filter by year
+    if (selectedYear.value !== 'all' && groupYear !== Number(selectedYear.value)) {
+      return false
+    }
+
+    return true
+  })
+
+  // Filter by status
+  if (selectedStatus.value !== 'all') {
+    filtered = filtered.filter((group) => {
+      const photoCount = getGroupPhotoCount(group)
+      switch (selectedStatus.value) {
+        case 'completed':
+          return photoCount === 3
+        case 'in-progress':
+          return photoCount > 0 && photoCount < 3
+        case 'not-started':
+          return photoCount === 0
+        default:
+          return true
+      }
+    })
+  }
+
+  return filtered
+})
+
+// Helper functions
+const isGroupComplete = (group) => {
+  const photos = group.photos || []
+  const hasAll = ['BEFORE', 'ACTION', 'AFTER'].every((category) =>
+    photos.some((photo) => photo.category === category),
+  )
+  return hasAll
+}
+
+// Load data function
+const loadData = async () => {
+  loading.value = true
+  errorMsg.value = ''
+
+  try {
+    console.log('🔄 Loading data for areaId:', areaId.value)
+    console.log('🏷️ Route params:', route.params)
+    console.log('🏷️ AreaId type:', typeof areaId.value)
+    console.log('🏷️ AreaId isNaN:', isNaN(areaId.value))
+
+    // Load comparison groups for this area
+    const groupsApiUrl = `/api/comparison-groups?areaId=${areaId.value}`
+    console.log('📡 API Call:', groupsApiUrl)
+
+    const { data: groupsRes } = await api.get(groupsApiUrl)
+    console.log('📡 Groups Response:', groupsRes)
+
+    const groups = groupsRes.items || groupsRes.data?.items || groupsRes.data || groupsRes || []
+    console.log('📊 Parsed Groups:', groups)
+    console.log('📊 Groups is array:', Array.isArray(groups))
+    console.log('🔍 Debug: First group summary:', groups[0]?.summary)
+    console.log(
+      '🔍 Debug: Groups with summary:',
+      groups.filter((g) => g.summary),
+    )
+    console.log('🔍 Debug: User can edit:', canEdit.value)
+    console.log('🔍 Debug: User role:', auth.user?.role)
+
+    // Load photos for each group
+    const groupsWithPhotos = await Promise.all(
+      groups.map(async (group) => {
+        try {
+          const photosApiUrl = `/api/photos?comparisonGroupId=${group.id}`
+          console.log('📡 Photos API Call:', photosApiUrl)
+
+          const { data: photosRes } = await api.get(photosApiUrl)
+          console.log('📡 Photos Response for group', group.id, ':', photosRes)
+
+          return {
+            ...group,
+            photos: photosRes.items || photosRes.data?.items || [],
+          }
+        } catch (photoError) {
+          console.error(`Error loading photos for group ${group.id}:`, photoError)
+          return { ...group, photos: [] }
+        }
+      }),
+    )
+
+    comparisonGroups.value = groupsWithPhotos
+    console.log('✅ Final groups with photos:', comparisonGroups.value)
+  } catch (error) {
+    console.error('❌ Error loading data:', error)
+    errorMsg.value = error.response?.data?.message || error.message || 'Gagal memuat data'
+  } finally {
+    loading.value = false
+  }
+}
+
+const getPhotoByCategory = (photos, category) => {
+  return photos?.find((photo) => photo.category === category) || null
+}
+
+const getGroupPhotoCount = (group) => {
+  const photos = group.photos || []
+  const categories = ['BEFORE', 'ACTION', 'AFTER']
+  return categories.filter((cat) => photos.some((photo) => photo.category === cat)).length
+}
+
+const getGroupProgressPercentage = (group) => {
+  const count = getGroupPhotoCount(group)
+  return Math.round((count / 3) * 100)
+}
+
+const getGroupStatusClass = (group) => {
+  if (isGroupComplete(group)) {
+    return 'bg-green-100 text-green-800'
+  }
+  if (group.photos.length > 0) {
+    return 'bg-yellow-100 text-yellow-800'
+  }
+  return 'bg-gray-100 text-gray-800'
+}
+
+const getGroupStatusText = (group) => {
+  if (isGroupComplete(group)) return 'Selesai'
+  if (group.photos.length > 0) return 'In Progress'
+  return 'Belum Mulai'
+}
+
+const goBack = () => {
+  router.push({ name: 'dashboard-tps' })
+}
+
+const handleGroupCreated = (newGroup) => {
+  console.log('✅ New group created:', newGroup)
+  console.log('🔄 Calling loadData after group creation...')
+  setTimeout(() => {
+    loadData()
+  }, 100)
+}
+
+const handlePhotoUpload = (data) => {
+  console.log('📸 Handle photo upload:', data)
+  loadData()
+}
+
+// Rich text editor functions moved to GroupDetail.vue
+
+// View and Filter methods
+const navigateToGroup = (groupId) => {
+  console.log('🔄 Navigating to group:', { areaId: areaId.value, groupId })
+
+  router.push({
+    name: 'group-detail',
+    params: {
+      areaId: areaId.value,
+      groupId: groupId,
+    },
+  })
+}
+
+const resetFilters = () => {
+  selectedMonth.value = 'all'
+  selectedYear.value = 'all'
+  selectedStatus.value = 'all'
+}
+
+const getCategoryText = (category) => {
+  const categoryMap = {
+    BEFORE: 'Before',
+    ACTION: 'Action',
+    AFTER: 'After',
+  }
+  return categoryMap[category] || category
+}
+
+const viewPhoto = (group, photo, category) => {
+  console.log('🖼️ ViewPhoto called:', { group, photo, category })
+
+  const allPhotos = group.photos || []
+  const orderedCategories = ['BEFORE', 'ACTION', 'AFTER']
+
+  // Create ordered photo array for lightbox navigation
+  const orderedPhotos = []
+  orderedCategories.forEach((cat) => {
+    const foundPhoto = allPhotos.find((p) => p.category === cat)
+    if (foundPhoto) orderedPhotos.push(foundPhoto)
+  })
+
+  console.log('🖼️ Ordered photos:', orderedPhotos)
+  const initialIndex = orderedPhotos.findIndex((p) => p.id === photo.id)
+  console.log('🖼️ Initial index:', initialIndex)
+
+  lightboxPhotos.value = orderedPhotos
+  lightboxInitialIndex.value = Math.max(0, initialIndex)
+  lightboxGroupInfo.value = group
+  showLightbox.value = true
+
+  console.log('🖼️ Lightbox state:', {
+    photos: lightboxPhotos.value.length,
+    initialIndex: lightboxInitialIndex.value,
+    isOpen: showLightbox.value,
+  })
+}
+
+const closeLightbox = () => {
+  showLightbox.value = false
+  lightboxPhotos.value = []
+  lightboxGroupInfo.value = null
+  lightboxInitialIndex.value = 0
+}
+
+// Debug functions
+const forceOpenModal = () => {
+  console.log('🟢 Force opening modal...')
+  showAddGroupModal.value = true
+  console.log('🟢 Modal state after force open:', showAddGroupModal.value)
+}
+
+const logModalState = () => {
+  console.log('📊 Current modal state:', {
+    showAddGroupModal: showAddGroupModal.value,
+    openAddGroupModal,
+    closeAddGroupModal,
+  })
+}
+
+const testAreaExists = async () => {
+  try {
+    console.log('🧪 Testing if area exists...')
+    console.log('🧪 AreaId:', areaId.value, typeof areaId.value)
+
+    // First check if areas exist at all
+    console.log('🧪 Getting all areas...')
+    const areasResponse = await api.get('/api/areas')
+    console.log('🧪 All areas:', areasResponse.data)
+
+    // Test direct API call
+    const testUrl = `/api/comparison-groups?areaId=${areaId.value}`
+    console.log('🧪 Test URL:', testUrl)
+
+    const response = await api.get(testUrl)
+    console.log('🧪 Raw API response:', response)
+    console.log('🧪 Response data:', response.data)
+    console.log('🧪 Response data type:', typeof response.data)
+    console.log('🧪 Response data keys:', Object.keys(response.data || {}))
+
+    // Test without areaId filter
+    console.log('🧪 Testing without areaId filter...')
+    const allGroupsResponse = await api.get('/api/comparison-groups')
+    console.log('🧪 All groups (no filter):', allGroupsResponse.data)
+  } catch (error) {
+    console.error('🧪 Area test error:', error)
+    console.error('🧪 Error response:', error.response?.data)
+  }
+}
+
+// Initialize
+onMounted(loadData)
+</script>
+
+<style scoped>
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

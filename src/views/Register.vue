@@ -1,68 +1,77 @@
 <template>
-  <div class="flex items-center justify-center min-h-screen">
+  <div class="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
     <div
-      class="bg-gray-50 p-8 m-8 rounded-xl shadow-2xl max-w-sm w-full transform transition-all border border-1 dark:bg-gray-600"
+      class="bg-gray-50 dark:bg-gray-800 p-8 m-8 rounded-xl shadow-2xl max-w-sm w-full transform transition-all border border-gray-200 dark:border-gray-700"
     >
-      <h2
-        class="text-3xl font-semibold text-center text-gray-800 mb-6 dark:text-white dark:bg-gray-600"
-      >
+      <h2 class="text-3xl font-semibold text-center text-gray-800 dark:text-white mb-6">
         Register
       </h2>
 
       <!-- Form login -->
       <form @submit.prevent="handleRegister">
         <div class="mb-6">
-          <label for="username" class="block text-sm font-medium text-gray-600">Username *</label>
+          <label for="username" class="block text-sm font-medium text-gray-600 dark:text-gray-300"
+            >Username *</label
+          >
           <input
             v-model="username"
             type="text"
             id="username"
             placeholder="Enter your username"
-            class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            class="w-full px-4 py-3 mt-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-500 dark:placeholder-gray-400"
             required
           />
         </div>
         <div class="mb-6">
-          <label for="username" class="block text-sm font-medium text-gray-600">Email</label>
+          <label for="email" class="block text-sm font-medium text-gray-600 dark:text-gray-300"
+            >Email</label
+          >
           <input
             v-model="email"
             type="email"
             id="email"
             placeholder="example@mail.com"
-            class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            class="w-full px-4 py-3 mt-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-500 dark:placeholder-gray-400"
           />
         </div>
 
         <div class="mb-6">
-          <label for="password" class="block text-sm font-medium text-gray-600">Password *</label>
+          <label for="password" class="block text-sm font-medium text-gray-600 dark:text-gray-300"
+            >Password *</label
+          >
           <input
             v-model="password"
             type="password"
             id="password"
             placeholder="Enter your password"
-            class="w-full px-4 py-3 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            class="w-full px-4 py-3 mt-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400 placeholder-gray-500 dark:placeholder-gray-400"
             required
           />
         </div>
         <div class="mb-6">
-          <label id="role" for="role" class="block text-sm font-medium text-gray-600">Role *</label>
+          <label
+            id="role"
+            for="role"
+            class="block text-sm font-medium text-gray-600 dark:text-gray-300"
+            >Role *</label
+          >
           <select
             name="role"
             id="role"
             v-model="role"
-            class="w-full px-4 py-3 mt-2 border border-gray-300 text-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            class="w-full px-4 py-3 mt-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
             required
           >
-            <option value="" disabled selected>Select your role</option>
+            <option value="EXTERNAL" selected>EXTERNAL (Default)</option>
+            <option value="INTERNAL">INTERNAL</option>
             <option value="ADMIN">ADMIN</option>
-            <option value="USER">USER</option>
           </select>
         </div>
 
-        <!-- Login Button -->
+        <!-- Register Button -->
         <button
           type="submit"
-          class="w-full py-4 px-6 bg-indigo-600 text-white font-semibold rounded-md hover:bg-indigo-700 transition duration-200"
+          class="w-full py-4 px-6 bg-indigo-600 dark:bg-indigo-700 text-white font-semibold rounded-md hover:bg-indigo-700 dark:hover:bg-indigo-800 transition duration-200"
         >
           Register
         </button>
@@ -88,7 +97,7 @@ const router = useRouter()
 
 const username = ref('')
 const password = ref('')
-const role = ref('')
+const role = ref('EXTERNAL')
 const email = ref('')
 
 const handleRegister = async () => {
@@ -111,5 +120,5 @@ const handleRegister = async () => {
 </script>
 
 <style scoped>
-/* Add some custom styles for hover and transition */
+/* Tambah custom styles untuk hover dan transition */
 </style>

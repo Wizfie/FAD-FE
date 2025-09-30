@@ -18,19 +18,16 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
-              <!-- Menampilkan vendor yang sudah dikelompokkan -->
-              <tr v-for="(group, vendor, index) in groupedVendor" :key="vendor">
-                <!-- Menampilkan nomor urut -->
+              <!-- Menampilkan vendor yang sudah diurutkan -->
+              <tr v-for="(group, index) in sortedVendor" :key="group.vendor">
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
                   {{ index + 1 }}
-                  <!-- Nomor urut berdasarkan urutan vendor -->
                 </td>
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
-                  {{ vendor }}
+                  {{ group.vendor }}
                 </td>
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
-                  {{ group.length }}
-                  <!-- Menampilkan jumlah item per vendor -->
+                  {{ group.items.length }}
                 </td>
               </tr>
               <!-- Menampilkan baris total -->
@@ -65,19 +62,16 @@
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200 dark:divide-gray-700 dark:bg-gray-900">
-              <!-- Menampilkan vendor yang sudah dikelompokkan -->
-              <tr v-for="(group, plant, index) in groupedPlant" :key="plant">
-                <!-- Menampilkan nomor urut -->
+              <!-- Menampilkan plant yang sudah diurutkan -->
+              <tr v-for="(group, index) in sortedPlant" :key="group.plant">
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
                   {{ index + 1 }}
-                  <!-- Nomor urut berdasarkan urutan vendor -->
                 </td>
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
-                  {{ plant }}
+                  {{ group.plant }}
                 </td>
                 <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
-                  {{ group.length }}
-                  <!-- Menampilkan jumlah item per vendor -->
+                  {{ group.items.length }}
                 </td>
               </tr>
               <!-- Menampilkan baris total -->
@@ -105,47 +99,46 @@ const props = defineProps({
   bodyData: Array,
 })
 
-// Mengelompokkan data berdasarkan vendor
-const groupedVendor = computed(() => {
-  return props.bodyData.reduce((groups, item) => {
-    if (!groups[item.vendor]) {
-      groups[item.vendor] = []
-    }
-    groups[item.vendor].push(item)
-    // console.log('VENDOR' + groups)
-    return groups
-  }, {})
+// Vendor sorted and grouped by count descending
+const sortedVendor = computed(() => {
+  const vendorMap = {}
+  props.bodyData.forEach((item) => {
+    if (!vendorMap[item.vendor]) vendorMap[item.vendor] = []
+    vendorMap[item.vendor].push(item)
+  })
+  return Object.entries(vendorMap)
+    .map(([vendor, items]) => ({ vendor, items }))
+    .sort((a, b) => b.items.length - a.items.length)
 })
-// Mengelompokkan data berdasarkan plant, mempertimbangkan duplikat noFad
-const groupedPlant = computed(() => {
-  const seenFad = new Set() // Menyimpan noFad yang sudah diproses
-  return props.bodyData.reduce((groups, item) => {
-    // Memeriksa jika noFad sudah ada, jika ya, abaikan item
+
+// Plant sorted and grouped by count descending (unique noFad)
+const sortedPlant = computed(() => {
+  const plantMap = {}
+  const seenFad = new Set()
+  props.bodyData.forEach((item) => {
     if (!seenFad.has(item.noFad)) {
       seenFad.add(item.noFad)
-      if (!groups[item.plant]) {
-        groups[item.plant] = []
-      }
-      groups[item.plant].push(item)
+      if (!plantMap[item.plant]) plantMap[item.plant] = []
+      plantMap[item.plant].push(item)
     }
-    // console.log('PLANT' + groups)
-    return groups
-  }, {})
+  })
+  return Object.entries(plantMap)
+    .map(([plant, items]) => ({ plant, items }))
+    .sort((a, b) => b.items.length - a.items.length)
 })
 
 // Menghitung total jumlah item dari semua vendor
 const totalVendor = computed(() => {
-  return Object.values(groupedVendor.value).reduce((total, group) => {
-    return total + group.length
+  return sortedVendor.value.reduce((total, group) => {
+    return total + group.items.length
   }, 0)
 })
 
 // Menghitung total jumlah item dari semua plant, hanya menghitung data unik berdasarkan noFad
 const totalPlant = computed(() => {
-  return Object.values(groupedPlant.value).reduce((total, group) => {
+  return sortedPlant.value.reduce((total, group) => {
     // Membuat set untuk menghitung noFad yang unik dalam setiap grup
-    const uniqueFads = new Set(group.map((item) => item.noFad))
-    return total + uniqueFads.size
+    return total + group.items.length
   }, 0)
 })
 </script>

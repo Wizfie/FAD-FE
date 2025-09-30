@@ -12,6 +12,16 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (s) => !!s.accessToken,
     getAccessToken: (s) => s.accessToken,
     getUser: (s) => s.user,
+    // Role-based permissions
+    isAdmin: (s) => s.user?.role === 'ADMIN',
+    isInternal: (s) => s.user?.role === 'INTERNAL',
+    isExternal: (s) => s.user?.role === 'EXTERNAL',
+    // Permission checks
+    canCreate: (s) => s.user?.role === 'ADMIN',
+    canEdit: (s) => s.user?.role === 'ADMIN',
+    canDelete: (s) => s.user?.role === 'ADMIN',
+    canManageUsers: (s) => s.user?.role === 'ADMIN',
+    canViewOnly: (s) => s.user?.role !== 'ADMIN',
   },
   actions: {
     async login(username, password) {

@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" href="./public/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- X-Frame-Options should be set via HTTP headers, not meta tags -->
+    <!-- <meta http-equiv="X-Frame-Options" content="DENY" /> -->
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>General Recycle Management</title>
   </head>
   <body>

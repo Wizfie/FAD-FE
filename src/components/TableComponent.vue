@@ -37,43 +37,90 @@
                   {{ indexNumber(row, index) }}
                 </td>
 
+                <!-- No FAD -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.noFad || '-' }}</div>
+                </td>
+
+                <!-- Item -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.item || '-' }}</div>
+                </td>
+
+                <!-- Plant -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.plant || '-' }}</div>
+                </td>
+
+                <!-- Vendor -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.vendor || '-' }}</div>
+                </td>
+
+                <!-- Terima FAD -->
+                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
+                  <div class="w-30">{{ formatDate(row.terimaFad) }}</div>
+                </td>
+
+                <!-- Terima BBM -->
+                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
+                  <div class="w-30">{{ formatDate(row.terimaBbm) }}</div>
+                </td>
+
+                <!-- Tanggal Serah Terima (BAST) -->
+                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
+                  <div class="w-30">{{ formatDate(row.bast) }}</div>
+                </td>
+
+                <!-- Status -->
                 <td
-                  v-for="(value, key) in row"
-                  :key="key"
-                  v-show="key !== 'id' && key !== 'createdAt'"
-                  class="px-3 py-4 text-xs text-wrap center dark:text-white"
+                  class="px-3 py-4 text-xs text-wrap dark:text-white"
                   :class="{
-                    'w-32 whitespace-nowrap text-center':
-                      key === 'terimaFad' || key === 'terimaBbm' || key === 'bast',
-                    'text-xs': key === 'terimaFad' || key === 'terimaBbm' || key === 'bast',
-                    'bg-orange-100 text-black  dark:text-orang-300  dark:bg-transparent':
-                      key === 'status' && String(value ?? '').toLowerCase() === 'hold',
-                    'bg-green-100 text-black  dark:text-green-300  dark:bg-transparent':
-                      key === 'status' && String(value ?? '').toLowerCase() === 'open',
+                    'bg-orange-100 text-black dark:text-orange-300 dark:bg-transparent':
+                      String(row.status ?? '').toLowerCase() === 'hold',
+                    'bg-green-100 text-black dark:text-green-300 dark:bg-transparent':
+                      String(row.status ?? '').toLowerCase() === 'open',
                     'bg-yellow-100 text-black dark:text-yellow-300 dark:bg-transparent':
-                      key === 'status' && String(value ?? '').toLowerCase() === 'onprogress',
+                      String(row.status ?? '').toLowerCase() === 'onprogress',
                     'bg-slate-100 text-black dark:text-slate-300 dark:bg-transparent':
-                      key === 'status' && String(value ?? '').toLowerCase() === 'closed',
-                    'text-black dark:text-white': key !== 'status',
+                      String(row.status ?? '').toLowerCase() === 'closed',
                   }"
                 >
-                  <div class="w-30">{{ value ? value : '-' }}</div>
+                  <div class="w-30">{{ row.status || '-' }}</div>
+                </td>
+
+                <!-- Deskripsi -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.deskripsi || '-' }}</div>
+                </td>
+
+                <!-- Keterangan -->
+                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                  <div class="w-30">{{ row.keterangan || '-' }}</div>
                 </td>
 
                 <td v-if="showAction" class="px-4 py-4 text-sm whitespace-nowrap">
                   <div class="flex gap-2">
                     <button
+                      v-if="editTable"
                       @click="editTable(row)"
-                      class="px-3 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-600 hover:text-white"
+                      class="px-3 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-600 hover:text-white dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-600 dark:hover:text-white"
                     >
                       Edit
                     </button>
                     <button
-                      @click="deleteTable(row.id)"
-                      class="px-3 text-sm text-red-600 border border-red-600 rounded hover:bg-red-600 hover:text-white"
+                      v-if="deleteTable"
+                      @click="deleteTable(row)"
+                      class="px-3 text-sm text-red-600 border border-red-600 rounded hover:bg-red-600 hover:text-white dark:text-red-400 dark:border-red-400 dark:hover:bg-red-600 dark:hover:text-white"
                     >
                       Delete
                     </button>
+                    <span
+                      v-if="!editTable && !deleteTable"
+                      class="px-3 text-xs text-gray-500 dark:text-gray-400 italic"
+                    >
+                      View Only
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -86,6 +133,7 @@
 </template>
 <script setup>
 import { computed } from 'vue'
+import { formatDate } from '@/utils/commonUtils.js'
 const props = defineProps({
   headers: {
     type: Array,

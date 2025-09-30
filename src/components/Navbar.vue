@@ -24,15 +24,4 @@ const props = defineProps({
 })
 </script>
 
-<style scoped>
-/* Animasi rotasi untuk transisi icon */
-.rotate-enter-active,
-.rotate-leave-active {
-  transition: transform 1s ease-in-out;
-}
-
-.rotate-enter, 
-.rotate-leave-to /* .rotate-leave-active in <2.1.8 */ {
-  transform: rotate(360deg);
-}
-</style>
+<!-- Custom rotation animation replaced with Tailwind transition classes -->

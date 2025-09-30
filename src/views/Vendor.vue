@@ -311,11 +311,4 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-/* (Opsional) haluskan transisi di mobile */
-@media (prefers-reduced-motion: no-preference) {
-  .active\:scale-\[\.99\]:active {
-    transform: scale(0.99);
-  }
-}
-</style>
+<!-- Custom active scale replaced with Tailwind active:scale-[0.99] class -->

@@ -14,12 +14,13 @@
 <script setup>
 import api from '@/stores/axios'
 import { ref, onMounted } from 'vue'
+
 const lastUpdateData = ref(null)
-const lastUpdateRef = ref(null)
 
 onMounted(() => {
   fetchLastUpdate()
 })
+
 /* Last update */
 const fetchLastUpdate = async () => {
   try {
@@ -29,4 +30,9 @@ const fetchLastUpdate = async () => {
     console.error('Failed fetching last update:', e)
   }
 }
+
+// Expose fetchLastUpdate function so parent components can call it
+defineExpose({
+  fetchLastUpdate,
+})
 </script>

@@ -3,28 +3,40 @@
     <header class="flex items-center justify-between">
       <div>
         <div class="flex items-center gap-4">
-          <h2 class="text-xl font-semibold">{{ group.title || 'Grup ' + group.id }}</h2>
-          <div class="text-sm text-gray-600">Area: {{ group.area?.name || '—' }}</div>
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+            {{ group.title || 'Grup ' + group.id }}
+          </h2>
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            Area: {{ group.area?.name || '—' }}
+          </div>
         </div>
         <div class="mt-2">
-          <div v-if="!isEditing" class="text-sm text-gray-700">
+          <div v-if="!isEditing" class="text-sm text-gray-700 dark:text-gray-300">
             {{ group.description || 'Tidak ada keterangan' }}
           </div>
           <div v-else class="flex gap-2 mt-2">
             <input
               v-model="editTitle"
               placeholder="Judul grup (mis. Perbaikan TPS 1)"
-              class="border rounded px-2 py-1 text-sm"
+              class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded px-2 py-1 text-sm"
             />
             <input
               v-model="editDescription"
               placeholder="Keterangan grup (ringkasan atau instruksi)"
-              class="border rounded px-2 py-1 text-sm w-80"
+              class="border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded px-2 py-1 text-sm w-80"
             />
-            <button class="px-2 py-1 bg-green-600 text-white rounded" @click="saveEdit">
+            <button
+              class="px-2 py-1 bg-green-600 dark:bg-green-700 text-white rounded hover:bg-green-700 dark:hover:bg-green-800"
+              @click="saveEdit"
+            >
               Simpan
             </button>
-            <button class="px-2 py-1 border rounded" @click="cancelEdit">Batal</button>
+            <button
+              class="px-2 py-1 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded hover:bg-gray-50 dark:hover:bg-gray-700"
+              @click="cancelEdit"
+            >
+              Batal
+            </button>
           </div>
         </div>
       </div>
@@ -155,6 +167,65 @@
       </div>
     </div>
 
+    <!-- Summary Section -->
+    <div class="mt-6 border-t pt-4 bg-blue-50 dark:bg-blue-900/10">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-medium text-gray-900 dark:text-white">📝 Ringkasan Perbandingan</h3>
+        <button
+          v-if="canEdit && !isEditingSummary"
+          class="px-3 py-1 rounded border text-sm text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          @click="startEditSummary"
+        >
+          {{ group.summary ? 'Edit Ringkasan' : 'Tambah Ringkasan' }}
+        </button>
+      </div>
+
+      <div v-if="!isEditingSummary" class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <div v-if="group.summary" class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+          {{ group.summary }}
+        </div>
+        <div v-else class="text-gray-500 dark:text-gray-400 italic">
+          <p class="mb-2">Belum ada ringkasan untuk grup ini.</p>
+          <p class="text-sm">
+            <span v-if="canEdit"
+              >Tambahkan ringkasan untuk menjelaskan hasil perbandingan, temuan, atau kesimpulan
+              dari sebelum-aksi-sesudah.</span
+            >
+            <span v-else
+              >Ringkasan akan ditambahkan oleh admin untuk menjelaskan hasil perbandingan ini.</span
+            >
+          </p>
+        </div>
+      </div>
+
+      <div v-else class="space-y-3">
+        <textarea
+          v-model="editSummary"
+          placeholder="Tulis ringkasan atau kesimpulan dari perbandingan ini...
+Contoh: 
+- Kondisi sebelum: Area terlihat kotor dengan sampah berserakan
+- Aksi yang dilakukan: Pembersihan dan pemasangan tempat sampah baru
+- Hasil sesudah: Area menjadi bersih dan tertata rapi
+- Dampak: Meningkatkan kenyamanan warga dan kebersihan lingkungan"
+          class="w-full h-32 p-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        ></textarea>
+        <div class="flex gap-2">
+          <button
+            class="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-800 transition-colors"
+            @click="saveSummary"
+          >
+            Simpan Ringkasan
+          </button>
+          <button
+            class="px-4 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            @click="cancelEditSummary"
+          >
+            Batal
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between">
       <div class="text-sm text-gray-600">Pilih thumbnail untuk mengganti gambar utama.</div>
       <div>
@@ -163,28 +234,172 @@
     </div>
   </div>
 
-  <!-- Lightbox modal -->
+  <!-- Lightbox modal dengan navigasi -->
   <div
     v-if="lightbox.open"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/75"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
     @click.self="closeLightbox"
   >
-    <div class="relative max-w-5xl max-h-[90vh] w-full">
-      <div class="absolute right-2 top-2 flex gap-2">
-        <button class="px-3 py-1 bg-white rounded" @click="zoomIn">+</button>
-        <button class="px-3 py-1 bg-white rounded" @click="zoomOut">-</button>
-        <button class="px-3 py-1 bg-white rounded" @click="resetZoom">Reset</button>
-        <button class="px-3 py-1 bg-white rounded" @click="downloadPhoto">Download</button>
-        <button class="px-3 py-1 bg-white rounded" @click="closeLightbox">Close</button>
+    <div class="relative max-w-6xl max-h-[95vh] w-full mx-4">
+      <!-- Header Controls -->
+      <div class="absolute left-4 top-4 flex items-center gap-3 z-10">
+        <div class="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+          {{ lightbox.currentIndex + 1 }} / {{ lightbox.allPhotos.length }}
+        </div>
+        <div class="bg-black/50 text-white px-3 py-1 rounded-full text-sm">
+          {{ lightbox.photo?.categoryDisplay || 'Foto' }}
+        </div>
+        <button
+          @click="toggleLightboxInfo"
+          class="bg-blue-600/70 text-white p-2 rounded-full hover:bg-blue-600/90 transition-all border border-white/30"
+          :class="{ 'bg-blue-600/90': showLightboxInfo }"
+          title="Toggle Group Info"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            ></path>
+          </svg>
+        </button>
       </div>
-      <div class="flex items-center justify-center h-full overflow-hidden p-4">
+
+      <!-- Group Info Panel -->
+      <div
+        v-if="showLightboxInfo"
+        class="absolute top-20 left-4 text-white transition-all duration-300 max-w-xs z-50 bg-black/75 backdrop-blur-lg rounded-lg p-4 shadow-2xl border border-white/10"
+      >
+        <!-- Group Info -->
+        <div class="mb-4">
+          <div
+            class="text-gray-300 mb-2 font-medium text-xs uppercase tracking-wide flex items-center gap-1"
+          >
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fill-rule="evenodd"
+                d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                clip-rule="evenodd"
+              />
+            </svg>
+            Grup: {{ group.title || 'Grup ' + group.id }}
+          </div>
+
+          <!-- Group Summary -->
+          <div
+            v-if="group.summary"
+            class="text-sm leading-relaxed text-gray-100 bg-black/30 p-3 rounded-md max-h-32 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent whitespace-pre-wrap"
+          >
+            {{ group.summary }}
+          </div>
+          <div v-else class="text-xs text-gray-400 italic bg-black/20 p-2 rounded-md">
+            Belum ada ringkasan untuk grup ini
+          </div>
+        </div>
+
+        <!-- Photo Info -->
+        <div class="border-t border-white/20 pt-3">
+          <div class="text-gray-300 mb-2 font-medium text-xs uppercase tracking-wide">
+            Keterangan Foto
+          </div>
+          <div class="text-sm text-gray-100">
+            {{ lightbox.photo?.keterangan || 'Tidak ada keterangan' }}
+          </div>
+          <div class="text-xs text-gray-400 mt-2">
+            {{
+              new Date(lightbox.photo?.takenAt || lightbox.photo?.createdAt).toLocaleString('id-ID')
+            }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Right Controls -->
+      <div class="absolute right-4 top-4 flex gap-2 z-10">
+        <button
+          class="px-3 py-1 bg-white/90 hover:bg-white rounded text-sm transition-colors"
+          @click="zoomOut"
+          title="Zoom Out (-)"
+        >
+          −
+        </button>
+        <button
+          class="px-3 py-1 bg-white/90 hover:bg-white rounded text-sm transition-colors"
+          @click="zoomIn"
+          title="Zoom In (+)"
+        >
+          +
+        </button>
+        <button
+          class="px-3 py-1 bg-white/90 hover:bg-white rounded text-sm transition-colors"
+          @click="resetZoom"
+          title="Reset Zoom (0)"
+        >
+          Reset
+        </button>
+        <button
+          class="px-3 py-1 bg-white/90 hover:bg-white rounded text-sm transition-colors"
+          @click="downloadPhoto"
+          title="Download"
+        >
+          📥
+        </button>
+        <button
+          class="px-3 py-1 bg-white/90 hover:bg-white rounded text-sm transition-colors"
+          @click="closeLightbox"
+          title="Close (Esc)"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Navigation Arrows -->
+      <button
+        v-if="lightbox.allPhotos.length > 1"
+        class="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center text-xl transition-colors"
+        @click="previousPhoto"
+        title="Previous (←)"
+      >
+        ‹
+      </button>
+
+      <button
+        v-if="lightbox.allPhotos.length > 1"
+        class="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-black/50 hover:bg-black/70 text-white rounded-full flex items-center justify-center text-xl transition-colors"
+        @click="nextPhoto"
+        title="Next (→)"
+      >
+        ›
+      </button>
+
+      <!-- Main Image Area -->
+      <div class="flex items-center justify-center h-full overflow-hidden p-16">
         <img
           :src="lightbox.photo?.url || lightbox.photo?.thumbUrl"
-          :style="{ transform: `scale(${lightbox.scale})` }"
-          class="max-h-[80vh] object-contain mx-auto"
+          :style="{
+            transform: `scale(${lightbox.scale}) translate(${lightbox.translateX}px, ${lightbox.translateY}px)`,
+          }"
+          class="max-h-full max-w-full object-contain mx-auto transition-transform duration-200"
+          :alt="lightbox.photo?.keterangan || 'Photo'"
         />
       </div>
-      <div class="text-sm text-white mt-2 text-center">{{ lightbox.photo?.keterangan || '' }}</div>
+
+      <!-- Bottom Info -->
+      <div class="absolute bottom-4 left-4 right-4">
+        <div class="bg-black/50 text-white px-4 py-2 rounded-lg text-center">
+          <div class="font-medium">{{ lightbox.photo?.keterangan || 'Tidak ada keterangan' }}</div>
+          <div class="text-sm text-gray-300 mt-1">
+            {{
+              new Date(lightbox.photo?.takenAt || lightbox.photo?.createdAt).toLocaleString('id-ID')
+            }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Keyboard Hints -->
+      <div class="absolute bottom-4 right-4 bg-black/50 text-white px-3 py-1 rounded text-xs">
+        ← → untuk navigasi • ESC untuk tutup
+      </div>
     </div>
   </div>
 </template>
@@ -199,7 +414,7 @@ const props = defineProps({
 })
 const emit = defineEmits(['close', 'add'])
 
-// organize photos by category (enum uppercase)
+// organize foto by category (enum uppercase)
 const photosByCategory = computed(() => {
   const out = { BEFORE: [], ACTION: [], AFTER: [] }
   if (!props.group || !props.group.photos) return out
@@ -214,6 +429,8 @@ const activeIndex = ref({ BEFORE: 0, ACTION: 0, AFTER: 0 })
 const isEditing = ref(false)
 const editTitle = ref('')
 const editDescription = ref('')
+const isEditingSummary = ref(false)
+const editSummary = ref('')
 const auth = useAuthStore()
 const canEdit = computed(() => auth.user?.role === 'ADMIN')
 
@@ -244,25 +461,94 @@ async function saveEdit() {
       title: editTitle.value,
       description: editDescription.value,
     })
-    // Emit updated group to parent so it can refresh
+    // Emit updated group ke parent agar bisa refresh
     emit('close')
-    // parent can re-open or refresh list; alternatively emit event
+    // parent bisa re-open atau refresh list; alternatif emit event
   } catch (e) {
     console.error('Failed update group', e)
     alert('Gagal menyimpan perubahan')
   }
 }
 
-// Lightbox state and handlers
-const lightbox = ref({ open: false, photo: null, scale: 1, translateX: 0, translateY: 0 })
+function startEditSummary() {
+  isEditingSummary.value = true
+  editSummary.value = props.group.summary || ''
+}
+
+function cancelEditSummary() {
+  isEditingSummary.value = false
+  editSummary.value = ''
+}
+
+async function saveSummary() {
+  try {
+    await api.put(`/api/comparison-groups/${props.group.id}`, {
+      summary: editSummary.value,
+    })
+    // Update group object locally
+    props.group.summary = editSummary.value
+    isEditingSummary.value = false
+
+    // Show success feedback
+    const msg = editSummary.value ? 'Ringkasan berhasil disimpan!' : 'Ringkasan berhasil dihapus!'
+    // You could use a toast notification here instead of alert
+    console.log(msg)
+  } catch (e) {
+    console.error('Failed to save summary', e)
+    alert('Gagal menyimpan ringkasan. Silakan coba lagi.')
+  }
+}
+
+// Lightbox state and handlers dengan gallery navigation
+const lightbox = ref({
+  open: false,
+  photo: null,
+  scale: 1,
+  translateX: 0,
+  translateY: 0,
+  currentIndex: 0,
+  allPhotos: [],
+})
+
+const showLightboxInfo = ref(false)
+
+// Computed untuk semua foto dalam urutan: BEFORE → ACTION → AFTER
+const allPhotosInOrder = computed(() => {
+  const all = []
+  const before = photosByCategory.value.BEFORE || []
+  const action = photosByCategory.value.ACTION || []
+  const after = photosByCategory.value.AFTER || []
+
+  // Add category info untuk display
+  before.forEach((p) => all.push({ ...p, categoryDisplay: 'Sebelum' }))
+  action.forEach((p) => all.push({ ...p, categoryDisplay: 'Aksi' }))
+  after.forEach((p) => all.push({ ...p, categoryDisplay: 'Sesudah' }))
+
+  return all
+})
 
 function openLightbox(photo) {
   if (!photo) return
+
+  const allPhotos = allPhotosInOrder.value
+  const currentIndex = allPhotos.findIndex((p) => p.id === photo.id)
+
+  console.log('🔍 Opening lightbox with group info:', {
+    photo: photo,
+    group: props.group,
+    groupTitle: props.group?.title,
+    groupSummary: props.group?.summary,
+    hasSummary: !!props.group?.summary,
+  })
+
   lightbox.value.photo = photo
   lightbox.value.open = true
   lightbox.value.scale = 1
   lightbox.value.translateX = 0
   lightbox.value.translateY = 0
+  lightbox.value.currentIndex = currentIndex >= 0 ? currentIndex : 0
+  lightbox.value.allPhotos = allPhotos
+
   // prevent scroll
   document.body.style.overflow = 'hidden'
 }
@@ -270,7 +556,69 @@ function openLightbox(photo) {
 function closeLightbox() {
   lightbox.value.open = false
   lightbox.value.photo = null
+  lightbox.value.allPhotos = []
+  showLightboxInfo.value = false
   document.body.style.overflow = ''
+}
+
+function toggleLightboxInfo() {
+  showLightboxInfo.value = !showLightboxInfo.value
+}
+
+function navigateToPhoto(direction) {
+  const allPhotos = lightbox.value.allPhotos
+  if (!allPhotos.length) return
+
+  let newIndex = lightbox.value.currentIndex + direction
+
+  // Wrap around navigation
+  if (newIndex < 0) newIndex = allPhotos.length - 1
+  if (newIndex >= allPhotos.length) newIndex = 0
+
+  lightbox.value.currentIndex = newIndex
+  lightbox.value.photo = allPhotos[newIndex]
+  resetZoom()
+}
+
+function previousPhoto() {
+  navigateToPhoto(-1)
+}
+
+function nextPhoto() {
+  navigateToPhoto(1)
+}
+
+// Keyboard navigation
+function onKeydown(e) {
+  if (!lightbox.value.open) return
+
+  switch (e.key) {
+    case 'Escape':
+      closeLightbox()
+      break
+    case 'ArrowLeft':
+      e.preventDefault()
+      previousPhoto()
+      break
+    case 'ArrowRight':
+      e.preventDefault()
+      nextPhoto()
+      break
+    case '+':
+    case '=':
+      e.preventDefault()
+      zoomIn()
+      break
+    case '-':
+    case '_':
+      e.preventDefault()
+      zoomOut()
+      break
+    case '0':
+      e.preventDefault()
+      resetZoom()
+      break
+  }
 }
 
 function zoomIn() {
@@ -307,10 +655,12 @@ function downloadPhoto() {
 
 onMounted(() => {
   window.addEventListener('wheel', onWheel, { passive: false })
+  window.addEventListener('keydown', onKeydown)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('wheel', onWheel)
+  window.removeEventListener('keydown', onKeydown)
   document.body.style.overflow = ''
 })
 </script>
