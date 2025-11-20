@@ -12,8 +12,9 @@
 
         <!-- Overlay on hover -->
         <div
-          class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center"
+          class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all rounded-lg flex items-center justify-center z-10"
         >
+          <!-- View Icon (Center) -->
           <svg
             class="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity"
             fill="none"
@@ -33,6 +34,28 @@
               d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
             ></path>
           </svg>
+        </div>
+
+        <!-- Admin Action Buttons (Top Right) - Higher z-index -->
+        <div
+          v-if="canEdit"
+          class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20"
+        >
+          <!-- Delete Button -->
+          <button
+            @click.stop="handleDeleteClick"
+            class="p-1.5 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg transition-colors hover:scale-110"
+            title="Hapus Foto"
+          >
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"
+              ></path>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -119,14 +142,12 @@
                       </button>
                     </div>
                   </div>
-                  <div
+                  <textarea
                     ref="captionEditor"
-                    contenteditable="true"
-                    class="p-2 min-h-[60px] bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:outline-none"
-                    @input="updateCaptionText"
-                    v-html="editCaptionText"
+                    v-model="editCaptionText"
+                    class="p-2 min-h-[60px] bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-xs focus:outline-none border-none resize-none w-full"
                     placeholder="Tulis keterangan foto..."
-                  ></div>
+                  ></textarea>
                 </div>
               </div>
 
@@ -158,9 +179,9 @@
       </div>
     </div>
 
-    <!-- Upload Slot -->
+    <!-- Upload Slot (Admin) -->
     <div
-      v-else
+      v-else-if="canEdit"
       @click="handleUploadClick"
       class="w-full h-48 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all group"
     >
@@ -190,6 +211,32 @@
       </div>
     </div>
 
+    <!-- No Photo - Non-Admin View -->
+    <div
+      v-else
+      class="w-full h-48 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800/50"
+    >
+      <svg
+        class="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+        ></path>
+      </svg>
+      <div class="text-center space-y-1">
+        <p class="text-sm font-medium text-gray-400 dark:text-gray-500">
+          Belum ada foto {{ getCategoryText(category) }}
+        </p>
+        <p class="text-xs text-gray-400 dark:text-gray-500">Foto akan ditambahkan oleh admin</p>
+      </div>
+    </div>
+
     <!-- Upload Modal -->
     <PhotoUploadModal
       :isOpen="showUploadModal"
@@ -203,7 +250,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import PhotoUploadModal from '@/components/PhotoUploadModal.vue'
 import { useModal } from '@/composables/useModal'
 import { useAuthStore } from '@/stores/auth'
@@ -284,28 +331,23 @@ const formatDate = (dateString) => {
   })
 }
 
-const formatFileSize = (bytes) => {
-  if (!bytes) return ''
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(1024))
-  return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i]
-}
-
 const handleUploadClick = () => {
-  console.log('📸 Upload slot clicked!', {
-    category: props.category,
-    groupId: props.groupId,
-    showUploadModal: showUploadModal.value,
-  })
   openUploadModal()
-  console.log('📸 Modal opened, new state:', showUploadModal.value)
 }
 
 const formatCaption = (caption) => {
   if (!caption) return ''
 
+  let text = caption
+
+  // Convert **bold** syntax
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+  // Convert _italic_ syntax
+  text = text.replace(/_(.*?)_/g, '<em>$1</em>')
+
   // Convert bullet points to HTML list
-  const lines = caption.split('\n').filter((line) => line.trim())
+  const lines = text.split('\n').filter((line) => line.trim())
 
   let html = ''
   let inList = false
@@ -319,14 +361,16 @@ const formatCaption = (caption) => {
         html += '<ul class="list-disc list-inside space-y-1">'
         inList = true
       }
-      const text = trimmed.replace(/^[-•*]\s+/, '')
-      html += `<li>${text}</li>`
+      const content = trimmed.replace(/^[-•*]\s+/, '')
+      html += `<li>${content}</li>`
     } else {
       if (inList) {
         html += '</ul>'
         inList = false
       }
-      html += `<p class="mb-1">${trimmed}</p>`
+      if (trimmed) {
+        html += `<p class="mb-1">${trimmed}</p>`
+      }
     }
   }
 
@@ -343,25 +387,135 @@ const handleUpload = (data) => {
 }
 
 const handlePhotoClick = () => {
-  console.log('📸 Photo clicked:', { photo: props.photo, category: props.category })
   emit('view', props.photo, props.category)
 }
 
 // Caption editing functions
 const formatCaptionText = (command) => {
-  document.execCommand(command, false, null)
-  if (captionEditor.value) {
-    captionEditor.value.focus()
+  const textarea = captionEditor.value
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = textarea.value.substring(start, end)
+
+  let replacement = ''
+  let newCursorPos = start
+
+  if (command === 'bold') {
+    if (selectedText) {
+      replacement = `**${selectedText}**`
+      newCursorPos = start + replacement.length
+    } else {
+      replacement = '****'
+      newCursorPos = start + 2 // Position cursor between the asterisks
+    }
+  } else if (command === 'italic') {
+    if (selectedText) {
+      replacement = `_${selectedText}_`
+      newCursorPos = start + replacement.length
+    } else {
+      replacement = '__'
+      newCursorPos = start + 1 // Position cursor between the underscores
+    }
+  } else if (command === 'insertUnorderedList') {
+    if (selectedText) {
+      // Convert selected text to bullet list
+      replacement = selectedText
+        .split('\n')
+        .map((line) => {
+          const trimmed = line.trim()
+          if (trimmed && !trimmed.match(/^[-•*]\s+/)) {
+            return `- ${trimmed}`
+          }
+          return line
+        })
+        .join('\n')
+      newCursorPos = start + replacement.length
+    } else {
+      // Insert bullet point
+      replacement = '- '
+      newCursorPos = start + 2
+    }
   }
+
+  const newValue = textarea.value.substring(0, start) + replacement + textarea.value.substring(end)
+  editCaptionText.value = newValue
+
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(newCursorPos, newCursorPos)
+  })
 }
 
-const updateCaptionText = (event) => {
-  editCaptionText.value = event.target.innerHTML
-}
+// updateCaptionText function removed - now using v-model directly
 
 const startEditCaption = () => {
   editingCaption.value = true
-  editCaptionText.value = props.photo.keterangan || ''
+
+  // Convert HTML back to markdown-like format for editing
+  if (props.photo.keterangan) {
+    editCaptionText.value = convertHTMLToMarkdown(props.photo.keterangan)
+  } else {
+    editCaptionText.value = ''
+  }
+
+  // Focus textarea after DOM update
+  nextTick(() => {
+    if (captionEditor.value && captionEditor.value.focus) {
+      captionEditor.value.focus()
+    }
+  })
+}
+
+// Convert HTML back to markdown-style for editing
+const convertHTMLToMarkdown = (html) => {
+  // Create a temporary div to parse the HTML
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = html
+
+  // Process bullet lists
+  const lists = tempDiv.querySelectorAll('ul')
+  lists.forEach((list) => {
+    const items = list.querySelectorAll('li')
+    let markdownList = ''
+
+    items.forEach((item) => {
+      markdownList += `- ${item.textContent}\n`
+    })
+
+    // Replace the list with our markdown version
+    const textNode = document.createTextNode(markdownList)
+    list.parentNode.replaceChild(textNode, list)
+  })
+
+  // Convert <strong> to **text**
+  const strongs = tempDiv.querySelectorAll('strong')
+  strongs.forEach((strong) => {
+    const text = strong.textContent
+    const markdownStrong = `**${text}**`
+    const textNode = document.createTextNode(markdownStrong)
+    strong.parentNode.replaceChild(textNode, strong)
+  })
+
+  // Convert <em> to _text_
+  const ems = tempDiv.querySelectorAll('em')
+  ems.forEach((em) => {
+    const text = em.textContent
+    const markdownEm = `_${text}_`
+    const textNode = document.createTextNode(markdownEm)
+    em.parentNode.replaceChild(textNode, em)
+  })
+
+  // Convert paragraphs
+  const paragraphs = tempDiv.querySelectorAll('p')
+  paragraphs.forEach((p, index) => {
+    if (index < paragraphs.length - 1) {
+      p.insertAdjacentText('afterend', '\n')
+    }
+  })
+
+  return tempDiv.textContent || ''
 }
 
 const cancelEditCaption = () => {
@@ -371,20 +525,95 @@ const cancelEditCaption = () => {
 
 const saveCaption = async () => {
   try {
-    console.log('💾 Saving caption for photo:', props.photo.id)
+    // Convert markdown-style formatting to HTML before saving
+    const formattedHTML = convertMarkdownToHTML(editCaptionText.value)
 
     await api.put(`/api/photos/${props.photo.id}`, {
-      keterangan: editCaptionText.value,
+      keterangan: formattedHTML,
     })
 
     // Update local data - emit event to parent to refresh
-    emit('upload', { photoId: props.photo.id, keterangan: editCaptionText.value })
+    emit('upload', { photoId: props.photo.id, keterangan: formattedHTML })
     editingCaption.value = false
-
-    console.log('✅ Caption saved successfully')
   } catch (error) {
     console.error('❌ Failed to save caption:', error)
     alert('Gagal menyimpan keterangan. Silakan coba lagi.')
+  }
+}
+
+// Convert markdown-style formatting to HTML
+const convertMarkdownToHTML = (text) => {
+  if (!text) return ''
+
+  // Convert bold (**text**) to <strong>
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+  // Convert italic (_text_) to <em>
+  text = text.replace(/_(.*?)_/g, '<em>$1</em>')
+
+  // Convert bullet lists
+  const lines = text.split('\n')
+  let html = ''
+  let inList = false
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (trimmed.match(/^[-•*]\s+/)) {
+      if (!inList) {
+        html += '<ul class="list-disc list-inside space-y-1">'
+        inList = true
+      }
+      const content = trimmed.replace(/^[-•*]\s+/, '')
+      html += `<li>${content}</li>`
+    } else {
+      if (inList) {
+        html += '</ul>'
+        inList = false
+      }
+      if (trimmed) {
+        html += `<p class="mb-1">${trimmed}</p>`
+      } else {
+        html += '<br>'
+      }
+    }
+  }
+
+  if (inList) {
+    html += '</ul>'
+  }
+
+  return html
+}
+
+// Handle Delete Photo
+const handleDeleteClick = async () => {
+  const confirmed = confirm(
+    `Apakah Anda yakin ingin menghapus foto ${getCategoryText(props.category)}?\n\n` +
+      'Foto yang sudah dihapus tidak dapat dikembalikan.',
+  )
+
+  if (!confirmed) return
+
+  try {
+    const response = await api.delete(`/api/photos/${props.photo.id}`)
+
+    if (response.data.success) {
+      alert('Foto berhasil dihapus!')
+      emit('deleted', props.photo)
+    } else {
+      alert(response.data.message || 'Gagal menghapus foto')
+    }
+  } catch (error) {
+    console.error('❌ Failed to delete photo:', error)
+
+    // Check if it's a 404 error (photo already deleted)
+    if (error.response?.status === 404) {
+      alert('Foto sudah tidak ada, halaman akan diperbarui')
+      emit('deleted', props.photo) // Still emit to update UI
+    } else {
+      alert(error.response?.data?.message || 'Gagal menghapus foto. Silakan coba lagi.')
+    }
   }
 }
 </script>

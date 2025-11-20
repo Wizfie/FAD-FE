@@ -4,11 +4,11 @@
     <div class="flex justify-between items-center mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard TPS</h1>
-        <p class="text-gray-600 dark:text-gray-400">{{ monthLabel }}</p>
       </div>
       <div class="flex items-center gap-3">
         <!-- Add Area Button -->
         <button
+          v-if="authStore.user?.role === `ADMIN`"
           @click="navigateToAddArea"
           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
         >
@@ -22,6 +22,25 @@
           </svg>
           Tambah Area
         </button>
+
+        <!-- Program 5R Button -->
+        <button
+          @click="navigateToProgram5R"
+          class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+          title="Informasi Program 5R"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <span class="hidden sm:inline">Program 5R</span>
+          <span class="sm:hidden">5R</span>
+        </button>
+
         <!-- Dashboard Switcher -->
         <DashboardSwitcher />
         <!-- Logout Button -->
@@ -77,7 +96,7 @@
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Groups</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Item 5R</p>
             <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ totalGroups }}</p>
           </div>
           <div class="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
@@ -209,7 +228,7 @@
           TPS Areas - Monitoring 5R
         </h2>
         <div class="text-sm text-gray-600 dark:text-gray-400">
-          {{ completedGroups }}/{{ totalGroups }} grup selesai
+          {{ completedGroups }}/{{ totalGroups }} item 5R selesai
         </div>
       </div>
 
@@ -232,8 +251,9 @@
                 {{ getStatusText(area.completionPercentage) }}
               </span>
 
-              <!-- Action Buttons -->
+              <!-- Action Buttons (Admin Only) -->
               <div
+                v-if="authStore.user?.role === 'ADMIN'"
                 class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <!-- Edit Button -->
@@ -293,7 +313,7 @@
           <!-- Stats -->
           <div class="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <p class="text-gray-500 dark:text-gray-400">Grup Selesai</p>
+              <p class="text-gray-500 dark:text-gray-400">Item 5R Selesai</p>
               <p class="font-semibold text-gray-900 dark:text-white">
                 {{ area.completedGroups }}/{{ area.totalGroups }}
               </p>
@@ -643,7 +663,8 @@
                       areasProgress.find((p) => p.areaId === deletingArea.id)?.totalGroups > 0
                     "
                   >
-                    {{ areasProgress.find((p) => p.areaId === deletingArea.id)?.totalGroups }} grup
+                    {{ areasProgress.find((p) => p.areaId === deletingArea.id)?.totalGroups }} item
+                    5R
                   </li>
                   <li
                     v-if="
@@ -654,7 +675,7 @@
                     {{ areasProgress.find((p) => p.areaId === deletingArea.id)?.totalPhotos }} foto
                   </li>
                 </ul>
-                <p class="mt-2">Hapus semua grup dan foto terlebih dahulu.</p>
+                <p class="mt-2">Hapus semua item 5R dan foto terlebih dahulu.</p>
               </div>
             </div>
           </div>
@@ -696,13 +717,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import api from '@/stores/axios.js'
 import DashboardSwitcher from '@/components/DashboardSwitcher.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { useAuthStore } from '@/stores/auth.js'
 
+const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -777,15 +799,9 @@ const canDeleteArea = computed(() => {
   return !areaProgress || (areaProgress.totalGroups === 0 && areaProgress.totalPhotos === 0)
 })
 
-// Filter states
-const selectedMonth = ref((currentDate.getMonth() + 1).toString()) // Current month (1-12)
-const selectedYear = ref(currentDate.getFullYear().toString()) // Current year
-
-// Computed properties
-const monthLabel = computed(() => {
-  const date = new Date(year.value, month.value, 1)
-  return date.toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
-})
+// Filter states - baca dari query parameters jika ada
+const selectedMonth = ref(route.query.month || (currentDate.getMonth() + 1).toString()) // Current month (1-12)
+const selectedYear = ref(route.query.year || currentDate.getFullYear().toString()) // Current year
 
 const areasWithProgress = computed(() => {
   return areas.value.map((area) => {
@@ -974,13 +990,21 @@ const navigateToArea = (area) => {
   router.push({
     name: 'area-detail',
     params: { id: area.id },
-    query: { name: area.name },
+    query: {
+      name: area.name,
+      month: selectedMonth.value,
+      year: selectedYear.value,
+    },
   })
 }
 
 const navigateToAddArea = () => {
   showAddAreaModal.value = true
   newAreaName.value = ''
+}
+
+const navigateToProgram5R = () => {
+  router.push('/program-5r')
 }
 
 // Reusable validation error handler
@@ -1116,7 +1140,7 @@ const handleDeleteArea = async () => {
   if (!deletingArea.value) return
 
   if (!canDeleteArea.value) {
-    deleteValidationError.value = 'Area tidak dapat dihapus karena masih memiliki foto atau grup'
+    deleteValidationError.value = 'Area tidak dapat dihapus karena masih memiliki foto atau item 5R'
     return
   }
 

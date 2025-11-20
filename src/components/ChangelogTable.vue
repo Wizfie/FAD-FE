@@ -102,7 +102,7 @@
 
 <script setup>
 import BaseButton from './BaseButton.vue'
-import { formatDateOnly, formatTimeOnly } from '@/utils/commonUtils.js'
+import { formatDateOnly, formatTimeOnly } from '@/utils/helper.js'
 
 defineProps({
   logs: { type: Array, default: () => [] },

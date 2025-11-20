@@ -78,7 +78,7 @@
                   atau drag & drop foto di sini
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  PNG, JPG, JPEG up to 10MB
+                  PNG, JPG, JPEG up to 5MB
                 </p>
               </div>
             </div>
@@ -94,14 +94,16 @@
                 <p class="font-medium">{{ selectedFile.name }}</p>
                 <p>{{ formatFileSize(selectedFile.size) }}</p>
               </div>
-              <button
-                type="button"
-                @click="clearFile"
-                class="text-red-600 hover:text-red-700 text-sm"
-              >
-                Hapus foto
-              </button>
             </div>
+          </div>
+          <div class="flex justify-center mt-2">
+            <button
+              type="button"
+              @click="clearFile"
+              class="text-red-600 hover:text-red-700 text-sm"
+            >
+              Hapus foto
+            </button>
           </div>
         </div>
 
@@ -164,7 +166,7 @@
 - Meja perlu dibersihkan dari debu
 
 Catatan tambahan bisa ditulis di sini..."
-              @keydown="handleKeydown"
+              @keydown.enter="handleEnterKey"
             ></textarea>
           </div>
 
@@ -263,6 +265,12 @@ const formattedCaption = computed(() => {
 
   let text = formData.value.caption
 
+  // Convert **bold** syntax
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+  // Convert _italic_ syntax
+  text = text.replace(/_(.*?)_/g, '<em>$1</em>')
+
   // Convert bullet points to HTML list
   const lines = text.split('\n').filter((line) => line.trim())
   let html = ''
@@ -276,8 +284,8 @@ const formattedCaption = computed(() => {
         html += '<ul class="list-disc list-inside space-y-1 mb-2">'
         inList = true
       }
-      const text = trimmed.replace(/^[-•*]\s+/, '')
-      html += `<li>${text}</li>`
+      const content = trimmed.replace(/^[-•*]\s+/, '')
+      html += `<li>${content}</li>`
     } else {
       if (inList) {
         html += '</ul>'
@@ -306,11 +314,32 @@ const getCategoryText = (category) => {
   return categoryMap[category] || category
 }
 
+// File validation function
+const validateFile = (file) => {
+  // Check file type
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png']
+  if (!allowedTypes.includes(file.type)) {
+    alert('Format file tidak didukung. Silakan pilih file JPG, JPEG, atau PNG.')
+    return false
+  }
+
+  // Check file size (5MB = 5 * 1024 * 1024 bytes)
+  const maxSize = 5 * 1024 * 1024
+  if (file.size > maxSize) {
+    alert(`Ukuran file terlalu besar. Maksimal 5MB. File Anda: ${formatFileSize(file.size)}`)
+    return false
+  }
+
+  return true
+}
+
 const handleFileSelect = (event) => {
   const file = event.target.files[0]
   if (file) {
-    selectedFile.value = file
-    previewUrl.value = URL.createObjectURL(file)
+    if (validateFile(file)) {
+      selectedFile.value = file
+      previewUrl.value = URL.createObjectURL(file)
+    }
   }
 }
 
@@ -320,8 +349,11 @@ const handleDrop = (event) => {
 
   const files = event.dataTransfer.files
   if (files.length > 0) {
-    selectedFile.value = files[0]
-    previewUrl.value = URL.createObjectURL(files[0])
+    const file = files[0]
+    if (validateFile(file)) {
+      selectedFile.value = file
+      previewUrl.value = URL.createObjectURL(file)
+    }
   }
 }
 
@@ -377,42 +409,79 @@ const insertBulletList = () => {
   })
 }
 
-const handleKeydown = (event) => {
-  // Auto bullet point on Enter
-  if (event.key === 'Enter') {
-    const textarea = event.target
-    const cursorPos = textarea.selectionStart
-    const textBeforeCursor = textarea.value.substring(0, cursorPos)
-    const currentLine = textBeforeCursor.split('\n').pop()
+// Handle Enter key specifically for auto bullet points
+const handleEnterKey = (event) => {
+  const textarea = event.target
+  const cursorPos = textarea.selectionStart
+  const textBeforeCursor = formData.value.caption.substring(0, cursorPos)
+  const currentLine = textBeforeCursor.split('\n').pop()
 
-    if (currentLine.match(/^[-•*]\s+/)) {
-      event.preventDefault()
-      const bulletMatch = currentLine.match(/^([-•*]\s+)/)
-      if (bulletMatch) {
-        const bullet = bulletMatch[1]
-        const newValue =
-          textarea.value.substring(0, cursorPos) +
-          '\n' +
-          bullet +
-          textarea.value.substring(cursorPos)
-        formData.value.caption = newValue
+  // Only handle auto bullet if current line starts with bullet
+  if (currentLine.match(/^[-•*]\s+/)) {
+    event.preventDefault()
+    const bulletMatch = currentLine.match(/^([-•*]\s+)/)
+    if (bulletMatch) {
+      const bullet = bulletMatch[1]
+      const currentValue = formData.value.caption
+      const newValue =
+        currentValue.substring(0, cursorPos) + '\n' + bullet + currentValue.substring(cursorPos)
 
-        nextTick(() => {
-          textarea.setSelectionRange(cursorPos + bullet.length + 1, cursorPos + bullet.length + 1)
-        })
-      }
+      const newCursorPos = cursorPos + bullet.length + 1
+      formData.value.caption = newValue
+
+      nextTick(() => {
+        const freshTextarea = captionTextarea.value
+        if (freshTextarea) {
+          freshTextarea.setSelectionRange(newCursorPos, newCursorPos)
+        }
+      })
     }
   }
+  // For normal Enter, let default behavior handle it
 }
 
 const toggleBold = () => {
   isBold.value = !isBold.value
-  // TODO: Implement bold formatting
+
+  const textarea = captionTextarea.value
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = textarea.value.substring(start, end)
+
+  if (!selectedText) return // Need selected text to format
+
+  const replacement = `**${selectedText}**`
+  formData.value.caption =
+    textarea.value.substring(0, start) + replacement + textarea.value.substring(end)
+
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + replacement.length, start + replacement.length)
+  })
 }
 
 const toggleItalic = () => {
   isItalic.value = !isItalic.value
-  // TODO: Implement italic formatting
+
+  const textarea = captionTextarea.value
+  if (!textarea) return
+
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = textarea.value.substring(start, end)
+
+  if (!selectedText) return // Need selected text to format
+
+  const replacement = `_${selectedText}_`
+  formData.value.caption =
+    textarea.value.substring(0, start) + replacement + textarea.value.substring(end)
+
+  nextTick(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + replacement.length, start + replacement.length)
+  })
 }
 
 const handleOverlayClick = (event) => {
@@ -442,20 +511,11 @@ const handleSubmit = async () => {
       ]),
     )
 
-    console.log('Uploading photo with data:', {
-      category: props.category,
-      groupId: props.groupId,
-      areaId: props.areaId,
-      caption: formData.value.caption,
-    })
-
     const response = await api.post('/api/photos', formDataToSend, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     })
-
-    console.log('Upload response:', response.data)
 
     emit('upload', {
       category: props.category,
@@ -469,7 +529,24 @@ const handleSubmit = async () => {
     formData.value.caption = ''
   } catch (error) {
     console.error('Upload failed:', error)
-    alert(`Upload gagal: ${error.response?.data?.message || error.message}`)
+
+    // Handle specific error codes from backend
+    const errorData = error.response?.data
+    let errorMessage = 'Upload gagal. Silakan coba lagi.'
+
+    if (errorData?.code === 'FILE_TOO_LARGE') {
+      errorMessage = 'File terlalu besar. Maksimal 5MB per file.'
+    } else if (errorData?.code === 'INVALID_FILE_FORMAT') {
+      errorMessage = 'Format file tidak didukung. Gunakan JPG, JPEG, atau PNG.'
+    } else if (errorData?.code === 'TOO_MANY_FILES') {
+      errorMessage = 'Terlalu banyak file. Upload satu file saja.'
+    } else if (errorData?.message) {
+      errorMessage = errorData.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
+    alert(errorMessage)
   } finally {
     uploading.value = false
   }

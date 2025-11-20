@@ -57,35 +57,17 @@ export function useDataFetching(endpoint, options = {}) {
         data.value = Array.isArray(transformedData) ? transformedData : []
 
         // Update meta information
-        console.log('DEBUG - Backend response:', { payload, params })
         if (payload.meta) {
-          console.log('DEBUG - Using payload.meta:', payload.meta)
           meta.value = { ...meta.value, ...payload.meta }
           // Always calculate totalPages to ensure correct pagination
           if (payload.meta.total !== undefined) {
             const limit = payload.meta.limit || params.limit || 10
             meta.value.totalPages = Math.ceil(payload.meta.total / limit)
-            console.log(
-              'DEBUG - Calculated totalPages:',
-              meta.value.totalPages,
-              '(total:',
-              payload.meta.total,
-              'limit:',
-              limit,
-              ')',
-            )
           }
         } else if (payload.total !== undefined) {
-          console.log(
-            'DEBUG - Calculating totalPages:',
-            payload.total,
-            'limit:',
-            params.limit || 10,
-          )
           meta.value.total = payload.total
           meta.value.totalPages = Math.ceil(payload.total / (params.limit || 10))
         }
-        console.log('DEBUG - Final meta:', meta.value)
       }
     } catch (err) {
       console.error(`Error fetching data from ${endpoint}:`, err)

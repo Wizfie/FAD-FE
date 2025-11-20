@@ -148,16 +148,10 @@ const fetchLogs = async () => {
       }
     })
 
-    console.log('Fetching changelog with params:', params)
     const response = await api.get('/api/changelog/logs', { params })
-
-    console.log('Changelog API response:', response)
-    console.log('Response data:', response.data)
-    console.log('Response status:', response.status)
 
     if (response.data) {
       logs.value = response.data.logs || []
-      console.log('Logs loaded:', logs.value.length, 'items')
 
       // Update pagination from backend response
       if (response.data.pagination) {
@@ -167,7 +161,6 @@ const fetchLogs = async () => {
           total: response.data.pagination.total || 0,
           totalPages: response.data.pagination.totalPages || 0,
         }
-        console.log('Pagination updated:', pagination.value)
       }
     } else {
       console.warn('No response data received')
@@ -182,7 +175,6 @@ const fetchLogs = async () => {
 
 const fetchStats = async () => {
   try {
-    console.log('Fetching changelog stats...')
     const response = await api.get('/api/changelog/stats')
 
     if (response.data) {
@@ -240,7 +232,6 @@ const exportLogs = async () => {
       Object.entries(filters.value).filter(([_, v]) => v !== '' && v != null),
     )
 
-    console.log('Exporting changelog with params:', params)
     const result = await exportChangelog(params)
 
     if (!result.success) {

@@ -45,7 +45,7 @@
 </template>
 
 <script setup>
-import { formatDateTime } from '@/utils/commonUtils.js'
+import { formatDateTime } from '@/utils/helper.js'
 
 defineProps({
   log: { type: Object, required: true },

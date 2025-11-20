@@ -71,7 +71,6 @@ import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
 import Pagination from '@/components/Pagination.vue'
 import NavGroup from '@/components/NavGroup.vue'
-import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 import api from '@/stores/axios.js'
 
 const dataFad = ref([])
@@ -147,9 +146,9 @@ const getData = async (page = currentPage.value) => {
         noFad: item.noFad ?? '',
         item: item.item ?? '',
         plant: item.plant ?? '',
-        terimaFad: fmtDateToDDMMYYYY(item.terimaFad),
-        terimaBbm: fmtDateToDDMMYYYY(item.terimaBbm),
-        bast: fmtDateToDDMMYYYY(item.bast),
+        terimaFad: item.terimaFad ?? '',
+        terimaBbm: item.terimaBbm ?? '',
+        bast: item.bast ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',

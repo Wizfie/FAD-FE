@@ -54,8 +54,6 @@
       :body-data="filteredData"
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
-      :edit-table="editRow"
-      :delete-table="deleteFad"
       :show-action="false"
     />
 
@@ -67,34 +65,15 @@
       @updateNext="nextPage"
       @updatePrev="prevPage"
     />
-
-    <!-- Form Slide-In -->
-    <div
-      class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
-      :class="{ 'translate-x-0': isFormOpen, 'translate-x-full': !isFormOpen }"
-    >
-      <!-- Menggunakan Komponen FormFad -->
-      <FormFad
-        :isFormOpen="isFormOpen"
-        @toggle-form="toggleForm"
-        :init-data="inputData"
-        :is-edit-mode="isEditMode"
-        @submit-form="handleSubmit"
-      />
-    </div>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
-import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
 import NavGroup from '@/components/NavGroup.vue'
 import api from '@/stores/axios'
-
-const isFormOpen = ref(false)
-const isEditMode = ref(false)
 
 const dataFad = ref([])
 const currentPage = ref(1) // Halaman aktif
@@ -108,9 +87,6 @@ const filteredData = computed(() =>
   dataFad.value.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
 )
 
-// Import fmtDateToDDMMYYYY dari helper untuk hindari duplikasi
-import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
-
 // debounce timer untuk search
 let searchTimer = null
 watch(searchQuery, (val) => {
@@ -119,20 +95,6 @@ watch(searchQuery, (val) => {
     currentPage.value = 1
     getData(1)
   }, 350)
-})
-
-const inputData = ref({
-  noFad: '',
-  item: '',
-  plant: '',
-  terimaFad: '',
-  terimaBbm: '',
-  bast: '',
-  vendor: '',
-  status: '',
-  deskripsi: '',
-  keterangan: '',
-  id: '',
 })
 
 const headers = [
@@ -148,15 +110,6 @@ const headers = [
   'Deskripsi',
   'Keterangan',
 ]
-
-// Toggle form
-const toggleForm = () => {
-  if (isFormOpen.value && isEditMode.value) {
-    resetForm()
-    isEditMode.value = false
-  }
-  isFormOpen.value = !isFormOpen.value
-}
 
 // Mengupdate halaman saat tombol pagination diklik
 const updatePage = (newPage) => {
@@ -188,13 +141,14 @@ const getData = async (page = currentPage.value) => {
     if (response.status === 200 && response.data) {
       const payload = response.data
       const rows = Array.isArray(payload.data) ? payload.data : []
+
       dataFad.value = rows.map((item) => ({
         noFad: item.noFad ?? '',
         item: item.item ?? '',
         plant: item.plant ?? '',
-        terimaFad: fmtDateToDDMMYYYY(item.terimaFad),
-        terimaBbm: fmtDateToDDMMYYYY(item.terimaBbm),
-        bast: fmtDateToDDMMYYYY(item.bast),
+        terimaFad: item.terimaFad ?? '',
+        terimaBbm: item.terimaBbm ?? '',
+        bast: item.bast ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',

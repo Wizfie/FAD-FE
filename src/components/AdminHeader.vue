@@ -1,6 +1,6 @@
 <template>
   <div
-    class="sm:flex sm:items-center sm:justify-between sticky top-0 sm:static z-30 -mx-4 sm:mx-0 px-4 sm:px-0 py-2 sm:py-0 bg-white/90 dark:bg-gray-900/90 sm:bg-transparent sm:dark:bg-transparent backdrop-blur sm:backdrop-blur-0 border-b sm:border-0 border-gray-200 dark:border-gray-800"
+    class="sm:flex sm:items-center sm:justify-between sticky top-0 sm:static -mx-4 sm:mx-0 px-4 sm:px-0 py-2 sm:py-0 bg-white/90 dark:bg-gray-900/90 sm:bg-transparent sm:dark:bg-transparent backdrop-blur sm:backdrop-blur-0 border-b sm:border-0 border-gray-200 dark:border-gray-800 z-10"
   >
     <!-- Title Section -->
     <div>
@@ -47,13 +47,12 @@
         </BaseButton>
 
         <!-- Overlay untuk menutup dropdown saat klik di luar -->
-        <div v-if="isMenuOpen" class="fixed inset-0 z-20" @click="closeDropdown"></div>
+        <div v-if="isMenuOpen" class="fixed inset-0 z-40" @click="closeDropdown"></div>
 
         <!-- Dropdown Menu -->
         <div
           v-if="isMenuOpen"
-          class="absolute right-0 z-30 mt-2 w-56 min-h-[200px] overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
-          style="min-height: 200px; background: white; border: 1px solid #ccc"
+          class="absolute right-0 mt-2 w-56 min-h-[200px] overflow-visible rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 backdrop-blur-sm z-50"
           role="menu"
         >
           <div class="p-2 border-b text-xs text-gray-500">Menu</div>
@@ -103,12 +102,10 @@ const authStore = useAuthStore()
 const isMenuOpen = ref(false)
 
 const toggleDropdown = () => {
-  console.log('Toggle dropdown called, current state:', isMenuOpen.value)
   isMenuOpen.value = !isMenuOpen.value
 }
 
 const closeDropdown = () => {
-  console.log('Close dropdown called')
   isMenuOpen.value = false
 }
 

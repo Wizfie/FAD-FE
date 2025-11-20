@@ -52,8 +52,6 @@
       :body-data="filteredData"
       :current-page="currentPage"
       :items-per-page="itemsPerPage"
-      :edit-table="editRow"
-      :delete-table="deleteFad"
       :show-action="false"
     />
 
@@ -65,32 +63,15 @@
       @updateNext="nextPage"
       @updatePrev="prevPage"
     />
-
-    <!-- Form Slide-In -->
-    <div
-      class="fixed inset-y-0 right-0 w-full max-w-md bg-white dark:bg-gray-900 shadow-lg transform transition-transform duration-300 ease-in-out"
-      :class="{ 'translate-x-0': isFormOpen, 'translate-x-full': !isFormOpen }"
-    >
-      <!-- Menggunakan Komponen FormFad -->
-      <FormFad
-        :isFormOpen="isFormOpen"
-        @toggle-form="toggleForm"
-        :init-data="inputData"
-        :is-edit-mode="isEditMode"
-        @submit-form="handleSubmit"
-      />
-    </div>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
-import FormFad from '@/components/FormFad.vue'
 import Pagination from '@/components/Pagination.vue'
 import NavGroup from '@/components/NavGroup.vue'
 import { useRoute } from 'vue-router'
-import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 import api from '@/stores/axios'
 
 const isFormOpen = ref(false)
@@ -134,15 +115,6 @@ const headersFad = [
   'Keterangan',
 ]
 
-// Toggle form
-const toggleForm = () => {
-  if (isFormOpen.value && isEditMode.value) {
-    resetForm()
-    isEditMode.value = false
-  }
-  isFormOpen.value = !isFormOpen.value
-}
-
 // Mengupdate halaman saat tombol pagination diklik
 const updatePage = (newPage) => {
   currentPage.value = newPage
@@ -177,9 +149,9 @@ const getData = async (page = currentPage.value) => {
         noFad: item.noFad ?? '',
         item: item.item ?? '',
         plant: item.plant ?? '',
-        terimaFad: fmtDateToDDMMYYYY(item.terimaFad),
-        terimaBbm: fmtDateToDDMMYYYY(item.terimaBbm),
-        bast: fmtDateToDDMMYYYY(item.bast),
+        terimaFad: item.terimaFad ?? '',
+        terimaBbm: item.terimaBbm ?? '',
+        bast: item.bast ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',

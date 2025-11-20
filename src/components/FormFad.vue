@@ -110,8 +110,13 @@
             v-model="form.vendorId"
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           >
-            <option value="" selected>-</option>
-            <option v-for="vendor in vendors" :key="vendor.id" :value="vendor.id">
+            <option value="">-</option>
+            <option
+              v-for="vendor in vendors"
+              :key="vendor.id"
+              :value="vendor.id"
+              :selected="String(vendor.id) === String(form.vendorId)"
+            >
               {{ vendor.name }}
             </option>
           </select>
@@ -155,13 +160,13 @@
 
       <!-- Form Actions -->
       <div class="flex justify-end gap-x-3 mt-auto">
-        <button
+        <!-- <button
           type="button"
           @click="toggleForm()"
           class="px-6 py-2.5 text-sm text-gray-700 transition-colors duration-200 bg-white border rounded-lg gap-x-2 dark:hover:bg-gray-800 dark:bg-gray-900 hover:bg-gray-100 dark:text-gray-200 dark:border-gray-700"
         >
           Batal
-        </button>
+        </button> -->
 
         <button
           v-if="(isEditMode && authStore.canEdit) || (!isEditMode && authStore.canCreate)"
@@ -237,11 +242,46 @@ const props = defineProps({
 })
 
 // Helper function to format date for input[type="date"]
+// Fixed: Prevent timezone conversion that causes H-1 date issue
 const formatDateForInput = (dateString) => {
   if (!dateString) return ''
+
+  // Try to extract YYYY-MM-DD directly from string first
+  const dateStr = String(dateString).trim()
+
+  // Check if already in YYYY-MM-DD format
+  const isoDateMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoDateMatch) {
+    return `${isoDateMatch[1]}-${isoDateMatch[2]}-${isoDateMatch[3]}`
+  }
+
+  // If it's a Date object or other format, parse carefully
   const date = new Date(dateString)
   if (isNaN(date.getTime())) return ''
-  return date.toISOString().split('T')[0] // YYYY-MM-DD format
+
+  // Use local date components to avoid timezone conversion
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}` // YYYY-MM-DD format
+}
+
+// Vendors reactive ref - declared early for use in helper functions
+const vendors = ref([])
+
+// Helper function to find vendorId by vendor name
+const findVendorIdByName = (vendorName) => {
+  if (!vendorName || vendors.value.length === 0) return ''
+
+  const vendor = vendors.value.find((v) => v.name.toLowerCase() === vendorName.toLowerCase().trim())
+
+  if (vendor) {
+    return vendor.id
+  }
+
+  console.warn('⚠️ Vendor not found by name:', vendorName)
+  return ''
 }
 
 const form = ref({
@@ -251,7 +291,8 @@ const form = ref({
   terimaFad: formatDateForInput(props.initData.terimaFad),
   terimaBbm: formatDateForInput(props.initData.terimaBbm),
   bast: formatDateForInput(props.initData.bast),
-  vendorId: props.initData.vendorId || '',
+  vendorId:
+    props.initData.vendorId || (props.initData.vendorRel ? props.initData.vendorRel.id : '') || '',
   status: props.initData.status || '',
   deskripsi: props.initData.deskripsi || '',
   keterangan: props.initData.keterangan || '',
@@ -277,21 +318,20 @@ watch(
   () => props.initData,
   (newData) => {
     if (props.isEditMode && newData) {
-      console.log('🔧 Edit mode - received data:', newData)
-      console.log('🔧 Edit mode - vendor info:')
-      console.log('  - vendor name:', newData.vendor)
-      console.log('  - vendorId:', newData.vendorId)
-      console.log('  - vendorRel:', newData.vendorRel)
-
       const formattedData = {
         ...newData,
         // Format dates for input fields
         terimaFad: formatDateForInput(newData.terimaFad),
         terimaBbm: formatDateForInput(newData.terimaBbm),
         bast: formatDateForInput(newData.bast),
+        // Ensure vendorId is properly handled - prioritize different sources
+        vendorId:
+          newData.vendorId ||
+          (newData.vendorRel ? newData.vendorRel.id : '') ||
+          // Try fallback by name if vendors are already loaded
+          (vendors.value.length > 0 && newData.vendor ? findVendorIdByName(newData.vendor) : '') ||
+          '',
       }
-      console.log('🔧 Edit mode - setting form data:', formattedData)
-      console.log('🔧 Edit mode - final vendorId in form:', formattedData.vendorId)
       form.value = formattedData
     } else {
       resetForm()
@@ -307,7 +347,7 @@ const toggleForm = () => {
   if (!props.isEditMode) {
     resetForm()
   } else {
-    form.value = { ...props.initData }
+    console.log('🔧 Closing form in edit mode, preserving data')
   }
 }
 const trimInput = (key) => {
@@ -322,6 +362,27 @@ const formatNoFad = (event) => {
   form.value.noFad = value.toUpperCase()
 }
 
+// Helper function to convert date input to local ISO string for backend
+const formatDateForBackend = (dateInputValue) => {
+  if (!dateInputValue) return null
+
+  // Parse the YYYY-MM-DD input as local date (not UTC)
+  const dateParts = dateInputValue.split('-')
+  if (dateParts.length !== 3) return null
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1 // Month is 0-indexed
+  const day = parseInt(dateParts[2])
+
+  // Create date in local timezone at noon to avoid timezone issues
+  const localDate = new Date(year, month, day, 12, 0, 0, 0)
+
+  if (isNaN(localDate.getTime())) return null
+
+  // Return ISO string with local timezone to preserve the date
+  return localDate.toISOString()
+}
+
 const handleSubmit = () => {
   // Check permissions before submitting
   if (authStore.canViewOnly) {
@@ -332,45 +393,97 @@ const handleSubmit = () => {
   // Trim all string values
   Object.keys(form.value).forEach((key) => trimInput(key))
 
-  // Debug: Log form data before emit
-  console.log('📋 FormFad submitting data:', form.value)
+  // Prepare form data with properly formatted dates for backend
+  const formDataForBackend = {
+    ...form.value,
+    // Convert date input values to backend-safe format
+    terimaFad: formatDateForBackend(form.value.terimaFad),
+    terimaBbm: formatDateForBackend(form.value.terimaBbm),
+    bast: formatDateForBackend(form.value.bast),
+  }
 
-  emit('submitForm', form.value)
+  console.log('📅 Form dates being sent to backend:', {
+    original: {
+      terimaFad: form.value.terimaFad,
+      terimaBbm: form.value.terimaBbm,
+      bast: form.value.bast,
+    },
+    formatted: {
+      terimaFad: formDataForBackend.terimaFad,
+      terimaBbm: formDataForBackend.terimaBbm,
+      bast: formDataForBackend.bast,
+    },
+  })
+
+  emit('submitForm', formDataForBackend)
   if (!props.isEditMode) {
     resetForm()
   }
 }
 
-const vendors = ref([])
-
 // Ambil data vendor dari backend
 const fetchVendors = async () => {
   try {
     const response = await api.get('/api/v1/get-vendor')
-    vendors.value = response.data.filter((vendor) => vendor.active) // Hanya vendor aktif
-    console.log('📋 Vendors loaded:', vendors.value)
-    console.log(
-      '📋 Vendor IDs available:',
-      vendors.value.map((v) => ({ id: v.id, name: v.name })),
-    )
+    const allVendors = response.data
+    vendors.value = allVendors.filter((vendor) => vendor.active) // Hanya vendor aktif
   } catch (error) {
-    console.error('Gagal mengambil data vendor:', error)
+    console.error('❌ Gagal mengambil data vendor:', error)
   }
 }
 
-// Watch for vendors loading and re-set vendorId if needed
 watch(
   vendors,
   (newVendors) => {
-    if (newVendors.length > 0 && props.isEditMode && props.initData.vendorId) {
-      console.log('📋 Vendors loaded, checking if vendorId needs to be set')
-      console.log('📋 Current form.vendorId:', form.value.vendorId)
-      console.log('📋 Expected vendorId from initData:', props.initData.vendorId)
+    if (newVendors.length > 0 && props.isEditMode && props.initData) {
+      // Get vendorId from initData - handle multiple possible sources
+      const vendorId =
+        props.initData.vendorId ||
+        (props.initData.vendorRel ? props.initData.vendorRel.id : null) ||
+        null
 
-      // Ensure vendorId is set correctly after vendors are loaded
-      if (form.value.vendorId !== props.initData.vendorId) {
-        console.log('📋 Setting vendorId to:', props.initData.vendorId)
-        form.value.vendorId = props.initData.vendorId
+      if (vendorId) {
+        // Convert to string for comparison (some IDs might be numbers)
+        const vendorIdStr = String(vendorId)
+        const formVendorIdStr = String(form.value.vendorId || '')
+
+        // Check if vendor exists in the list
+        const vendorExists = newVendors.some((vendor) => String(vendor.id) === vendorIdStr)
+
+        if (vendorExists && formVendorIdStr !== vendorIdStr) {
+          form.value.vendorId = vendorId // Keep original type
+        } else if (!vendorExists) {
+          console.warn('⚠️ Vendor not found in active vendors list:', vendorId)
+          form.value.vendorId = '' // Reset if vendor not found or inactive
+        }
+      }
+    }
+  },
+  { immediate: true },
+)
+
+// Watch untuk memastikan vendorId ter-set setelah vendors dimuat dan initData berubah
+watch(
+  [vendors, () => props.initData, () => props.isEditMode],
+  ([newVendors, newInitData, isEdit]) => {
+    if (newVendors.length > 0 && isEdit && newInitData) {
+      // Prioritize vendorId dari berbagai sumber
+      let vendorId =
+        newInitData.vendorId || (newInitData.vendorRel ? newInitData.vendorRel.id : null) || null
+
+      // Fallback: try to find by vendor name if vendorId is null/empty
+      if (!vendorId && newInitData.vendor) {
+        vendorId = findVendorIdByName(newInitData.vendor)
+      }
+
+      if (vendorId && String(form.value.vendorId) !== String(vendorId)) {
+        // Pastikan vendor ada dalam daftar aktif
+        const vendorExists = newVendors.some((vendor) => String(vendor.id) === String(vendorId))
+        if (vendorExists) {
+          form.value.vendorId = vendorId
+        } else {
+          console.warn('⚠️ Vendor not found in active list, ID:', vendorId)
+        }
       }
     }
   },
@@ -382,5 +495,3 @@ onMounted(() => {
   fetchVendors()
 })
 </script>
-
-<!-- Custom CSS replaced with Tailwind: max-h-[80vh] overflow-y-auto -->

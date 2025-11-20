@@ -2,7 +2,7 @@
   <!-- Menu Navigasi - muncul untuk role INTERNAL dan ADMIN -->
   <div
     v-if="authStore.user?.role === 'INTERNAL' || authStore.user?.role === 'ADMIN'"
-    class="flex items-center gap-2"
+    class="flex items-center gap-2 relative"
   >
     <div class="relative">
       <button
@@ -42,18 +42,18 @@
       </button>
 
       <!-- Overlay -->
-      <div v-if="isDropdownOpen" class="fixed inset-0 z-20" @click="closeDropdown"></div>
+      <div v-if="isDropdownOpen" class="fixed inset-0 z-[9998]" @click="closeDropdown"></div>
 
       <!-- Dropdown Menu -->
       <div
         v-if="isDropdownOpen"
-        class="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900"
+        class="absolute right-0 mt-2 w-56 z-[9999] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900 backdrop-blur-sm"
         role="menu"
       >
         <router-link
           :to="{ name: 'dashboard-fad' }"
           @click="closeDropdown"
-          class="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 dark:text-gray-200 dark:hover:bg-blue-900/30"
+          class="flex items-center z-100 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 dark:text-gray-200 dark:hover:bg-blue-900/30"
           :class="{ 'bg-blue-50 dark:bg-blue-900/30': currentDashboard === 'fad' }"
           role="menuitem"
         >
@@ -228,7 +228,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 

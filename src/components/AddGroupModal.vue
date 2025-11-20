@@ -139,16 +139,11 @@ const emit = defineEmits(['close', 'created'])
 // Debug watcher
 watch(
   () => props.isOpen,
-  (newVal, oldVal) => {
-    console.log('🟡 AddGroupModal isOpen changed:', oldVal, '->', newVal)
-    console.log('🟡 AddGroupModal areaId:', props.areaId)
-  },
+  (newVal, oldVal) => {},
   { immediate: true },
 )
 
-onMounted(() => {
-  console.log('🟡 AddGroupModal mounted with props:', props)
-})
+// onMounted(() => {})
 
 // Form data
 const formData = ref({
@@ -177,11 +172,7 @@ const handleSubmit = async () => {
       areaId: parseInt(props.areaId),
     }
 
-    console.log('Creating comparison group:', payload)
-
     const response = await api.post('/api/comparison-groups', payload)
-
-    console.log('Group created:', response.data)
 
     emit('created', response.data)
 

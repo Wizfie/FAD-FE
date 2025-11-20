@@ -98,6 +98,12 @@ const router = createRouter({
       component: () => import('@/views/GroupDetail.vue'),
       meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
     },
+    {
+      path: '/program-5r',
+      name: 'program-info',
+      component: () => import('@/views/ProgramInfo.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+    },
   ],
 })
 
