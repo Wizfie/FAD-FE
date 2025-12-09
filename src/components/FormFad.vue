@@ -384,6 +384,27 @@ const formatDateForBackend = (dateInputValue) => {
   return localDate.toISOString()
 }
 
+// Helper function to convert date input to local ISO string for backend
+const formatDateForBackend = (dateInputValue) => {
+  if (!dateInputValue) return null
+
+  // Parse the YYYY-MM-DD input as local date (not UTC)
+  const dateParts = dateInputValue.split('-')
+  if (dateParts.length !== 3) return null
+
+  const year = parseInt(dateParts[0])
+  const month = parseInt(dateParts[1]) - 1 // Month is 0-indexed
+  const day = parseInt(dateParts[2])
+
+  // Create date in local timezone at noon to avoid timezone issues
+  const localDate = new Date(year, month, day, 12, 0, 0, 0)
+
+  if (isNaN(localDate.getTime())) return null
+
+  // Return ISO string with local timezone to preserve the date
+  return localDate.toISOString()
+}
+
 const handleSubmit = () => {
   // Check permissions before submitting
   if (authStore.canViewOnly) {

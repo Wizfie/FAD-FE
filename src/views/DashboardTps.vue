@@ -716,7 +716,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/stores/axios.js'
 import DashboardSwitcher from '@/components/DashboardSwitcher.vue'
@@ -799,30 +799,9 @@ const canDeleteArea = computed(() => {
   return !areaProgress || (areaProgress.totalGroups === 0 && areaProgress.totalPhotos === 0)
 })
 
-// Filter states - prioritas: query params > localStorage > default (bulan saat ini)
-const getInitialMonth = () => {
-  if (route.query.month) return route.query.month
-  const savedMonth = localStorage.getItem('tps-filter-month')
-  return savedMonth || (currentDate.getMonth() + 1).toString()
-}
-
-const getInitialYear = () => {
-  if (route.query.year) return route.query.year
-  const savedYear = localStorage.getItem('tps-filter-year')
-  return savedYear || currentDate.getFullYear().toString()
-}
-
-const selectedMonth = ref(getInitialMonth())
-const selectedYear = ref(getInitialYear())
-
-// Watch untuk menyimpan pilihan filter ke localStorage
-watch(selectedMonth, (newMonth) => {
-  localStorage.setItem('tps-filter-month', newMonth)
-})
-
-watch(selectedYear, (newYear) => {
-  localStorage.setItem('tps-filter-year', newYear)
-})
+// Filter states - baca dari query parameters jika ada
+const selectedMonth = ref(route.query.month || (currentDate.getMonth() + 1).toString()) // Current month (1-12)
+const selectedYear = ref(route.query.year || currentDate.getFullYear().toString()) // Current year
 
 const areasWithProgress = computed(() => {
   return areas.value.map((area) => {

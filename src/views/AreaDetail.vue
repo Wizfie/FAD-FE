@@ -680,70 +680,88 @@ const isCurrentOrLatestMonth = computed(() => {
 const filteredGroups = computed(() => {
   let filtered = [...comparisonGroups.value]
 
-  // Filter by month and year
-  if (selectedMonth.value !== 'all' || selectedYear.value !== 'all') {
-    filtered = filtered.filter((group) => {
-      const groupDate = new Date(group.createdAt)
-      const groupMonth = groupDate.getMonth() + 1
-      const groupYear = groupDate.getFullYear()
-      const isIncomplete = getGroupPhotoCount(group) < 3
+  // Filter by month and year (dengan logic item berkelanjutan yang benar)
+  filtered = filtered.filter((group) => {
+    const groupDate = new Date(group.createdAt)
+    const groupMonth = groupDate.getMonth() + 1 // getMonth() returns 0-11
+    const groupYear = groupDate.getFullYear()
+    const isIncomplete = getGroupPhotoCount(group) < 3
 
-      const selectedMonthNum = Number(selectedMonth.value)
-      const selectedYearNum =
-        selectedYear.value !== 'all' ? Number(selectedYear.value) : new Date().getFullYear()
+    const selectedMonthNum = Number(selectedMonth.value)
+    const selectedYearNum =
+      selectedYear.value !== 'all' ? Number(selectedYear.value) : new Date().getFullYear()
 
-      // Item yang belum selesai (berkelanjutan):
-      // Muncul di bulan pembuatan dan bulan-bulan setelahnya
-      if (isIncomplete) {
-        // Jika filter tahun aktif, pastikan tahun group tidak lebih besar dari filter
-        if (selectedYear.value !== 'all' && groupYear > selectedYearNum) {
-          return false
-        }
-
-        // Item berkelanjutan muncul jika bulan filter >= bulan pembuatan
-        if (selectedMonth.value !== 'all') {
-          const isInPeriod =
-            groupYear < selectedYearNum ||
-            (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
-          return isInPeriod
-        }
-
-        // Jika hanya filter tahun, tampilkan jika tahun <= filter tahun
-        return groupYear <= selectedYearNum
-      }
-
-      // Item yang sudah selesai: hanya muncul di bulan/tahun pembuatannya
-      if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
-        return false
-      }
-
-      if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
-        return false
-      }
-
+    // Jika "Semua Bulan/Tahun" dipilih, tampilkan semua
+    if (selectedMonth.value === 'all' && selectedYear.value === 'all') {
       return true
-    })
+    }
+
+    // 2. Bulan-bulan SETELAH bulan pembuatan (berkelanjutan)
+    if (isIncomplete) {
+      // Cek apakah bulan yang dipilih >= bulan pembuatan item
+      const isCurrentOrFutureMonth =
+        groupYear < selectedYearNum ||
+        (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
+
+      // Jika tahun difilter, pastikan dalam range yang benar
+      if (selectedYear.value !== 'all' && groupYear > selectedYearNum) {
+        return false
+      }
+
+      return isCurrentOrFutureMonth
+    }
+
+    // Item yang sudah selesai hanya muncul sesuai bulan/tahun pembuatannya
+    if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
+      return false
+    }
+
+    if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
+      return false
+    }
+
+    // Item berkelanjutan muncul jika bulan filter >= bulan pembuatan
+    if (selectedMonth.value !== 'all') {
+      const isInPeriod =
+        groupYear < selectedYearNum ||
+        (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
+      return isInPeriod
+    }
+
+    // Jika hanya filter tahun, tampilkan jika tahun <= filter tahun
+    return groupYear <= selectedYearNum
+  })
+
+  // Item yang sudah selesai: hanya muncul di bulan/tahun pembuatannya
+  if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
+    return false
   }
 
-  // Filter by status
-  if (selectedStatus.value !== 'all') {
-    filtered = filtered.filter((group) => {
-      const photoCount = getGroupPhotoCount(group)
-      switch (selectedStatus.value) {
-        case 'completed':
-          return photoCount === 3
-        case 'in-progress':
-          return photoCount > 0 && photoCount < 3
-        case 'not-started':
-          return photoCount === 0
-        default:
-          return true
-      }
-    })
+  if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
+    return false
   }
+
+  return true
+})
+
+// Filter by status
+if (selectedStatus.value !== 'all') {
+  filtered = filtered.filter((group) => {
+    const photoCount = getGroupPhotoCount(group)
+    switch (selectedStatus.value) {
+      case 'completed':
+        return photoCount === 3
+      case 'in-progress':
+        return photoCount > 0 && photoCount < 3
+      case 'not-started':
+        return photoCount === 0
+      default:
+        return true
+    }
+  })
 
   return filtered
-})
+}
 
 // Helper functions
 const isGroupComplete = (group) => {

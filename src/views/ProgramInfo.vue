@@ -150,11 +150,10 @@
               @mouseup="handleMouseUp"
               @mouseleave="handleMouseUp"
               @touchstart="handleTouchStart"
-              @touchmove="handleTouchMove"
               @touchend="handleTouchEnd"
             >
               <img
-                :src="getImageUrl(currentImage?.url)"
+                :src="currentImage?.url"
                 :alt="currentImage?.title || currentImage?.originalName"
                 class="max-w-full max-h-full object-contain transition-all duration-300 select-none pointer-events-none"
                 :style="{
@@ -333,9 +332,10 @@
           <div
             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4"
           >
-            <div
+            <button
               v-for="(image, index) in images"
               :key="image.id"
+              @click="selectImage(index)"
               class="group relative aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border-2 transition-all duration-300 hover:shadow-md"
               :class="{
                 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800':
@@ -344,83 +344,41 @@
                   index !== currentImageIndex,
               }"
             >
-              <!-- Image Button -->
-              <button @click="selectImage(index)" class="w-full h-full">
-                <img
-                  :src="getImageUrl(image.thumbUrl || image.url)"
-                  :alt="image.title || image.originalName"
-                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  @error="handleImageError"
-                />
+              <img
+                :src="image.thumbUrl || image.url"
+                :alt="image.title || image.originalName"
+                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                @error="handleImageError"
+              />
 
-                <!-- Overlay -->
-                <div
-                  class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"
-                ></div>
-
-                <!-- Current indicator -->
-                <div
-                  v-if="index === currentImageIndex"
-                  class="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 shadow-lg"
-                >
-                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path
-                      fill-rule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clip-rule="evenodd"
-                    />
-                  </svg>
-                </div>
-
-                <!-- Image title on hover -->
-                <div
-                  class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                >
-                  <p class="text-white text-xs truncate">
-                    {{ image.title || image.originalName }}
-                  </p>
-                </div>
-              </button>
-
-              <!-- Reorder Buttons (Admin Only) -->
+              <!-- Overlay -->
               <div
-                v-if="canManage"
-                class="absolute top-2 left-2 flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"
+              ></div>
+
+              <!-- Current indicator -->
+              <div
+                v-if="index === currentImageIndex"
+                class="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 shadow-lg"
               >
-                <button
-                  v-if="index > 0"
-                  @click.stop="moveImageUp(index)"
-                  :disabled="reordering"
-                  class="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1.5 rounded shadow-lg transition-colors disabled:opacity-50"
-                  title="Pindah ke atas"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 15l7-7 7 7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  v-if="index < images.length - 1"
-                  @click.stop="moveImageDown(index)"
-                  :disabled="reordering"
-                  class="bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 p-1.5 rounded shadow-lg transition-colors disabled:opacity-50"
-                  title="Pindah ke bawah"
-                >
-                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fill-rule="evenodd"
+                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
               </div>
-            </div>
+
+              <!-- Image title on hover -->
+              <div
+                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              >
+                <p class="text-white text-xs truncate">
+                  {{ image.title || image.originalName }}
+                </p>
+              </div>
+            </button>
           </div>
         </div>
       </div>
@@ -479,10 +437,7 @@
 import { useAuthStore } from '@/stores/auth'
 import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useImageUrl } from '@/composables/useImageUrl'
 import api from '@/stores/axios'
-
-const { getImageUrl } = useImageUrl()
 
 // Store
 const authStore = useAuthStore()
@@ -493,7 +448,6 @@ const images = ref([])
 const loading = ref(false)
 const uploading = ref(false)
 const deleting = ref(false)
-const reordering = ref(false)
 const currentImageIndex = ref(0)
 const showDeleteConfirm = ref(false)
 
@@ -654,8 +608,8 @@ const handleMouseDown = (event) => {
   if (zoomLevel.value > 1) {
     isDragging.value = true
     dragStart.value = {
-      x: event.clientX,
-      y: event.clientY,
+      x: event.clientX - imagePosition.value.x,
+      y: event.clientY - imagePosition.value.y,
     }
     event.preventDefault()
   }
@@ -663,17 +617,9 @@ const handleMouseDown = (event) => {
 
 const handleMouseMove = (event) => {
   if (isDragging.value && zoomLevel.value > 1) {
-    const deltaX = (event.clientX - dragStart.value.x) / zoomLevel.value
-    const deltaY = (event.clientY - dragStart.value.y) / zoomLevel.value
-
     imagePosition.value = {
-      x: imagePosition.value.x + deltaX,
-      y: imagePosition.value.y + deltaY,
-    }
-
-    dragStart.value = {
-      x: event.clientX,
-      y: event.clientY,
+      x: event.clientX - dragStart.value.x,
+      y: event.clientY - dragStart.value.y,
     }
   }
 }
@@ -739,113 +685,14 @@ const formatFileSize = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
-// Reorder functions
-const moveImageUp = async (index) => {
-  if (index <= 0 || reordering.value) return
-
-  const image = images.value[index]
-  const prevImage = images.value[index - 1]
-
-  try {
-    reordering.value = true
-
-    // Swap display orders
-    await api.put(`/api/program-info/${image.id}`, {
-      displayOrder: prevImage.displayOrder,
-    })
-
-    await api.put(`/api/program-info/${prevImage.id}`, {
-      displayOrder: image.displayOrder,
-    })
-
-    // Reload images to get updated order
-    await loadImages()
-
-    // Adjust current index if needed
-    if (currentImageIndex.value === index) {
-      currentImageIndex.value = index - 1
-    } else if (currentImageIndex.value === index - 1) {
-      currentImageIndex.value = index
-    }
-  } catch (error) {
-    console.error('Gagal mengubah urutan gambar:', error)
-    alert('Gagal mengubah urutan gambar')
-  } finally {
-    reordering.value = false
-  }
-}
-
-const moveImageDown = async (index) => {
-  if (index >= images.value.length - 1 || reordering.value) return
-
-  const image = images.value[index]
-  const nextImage = images.value[index + 1]
-
-  try {
-    reordering.value = true
-
-    // Swap display orders
-    await api.put(`/api/program-info/${image.id}`, {
-      displayOrder: nextImage.displayOrder,
-    })
-
-    await api.put(`/api/program-info/${nextImage.id}`, {
-      displayOrder: image.displayOrder,
-    })
-
-    // Reload images to get updated order
-    await loadImages()
-
-    // Adjust current index if needed
-    if (currentImageIndex.value === index) {
-      currentImageIndex.value = index + 1
-    } else if (currentImageIndex.value === index + 1) {
-      currentImageIndex.value = index
-    }
-  } catch (error) {
-    console.error('Gagal mengubah urutan gambar:', error)
-    alert('Gagal mengubah urutan gambar')
-  } finally {
-    reordering.value = false
-  }
-}
-
 // Touch gestures for mobile
 const touchStart = ref({ x: 0, y: 0 })
 const touchEnd = ref({ x: 0, y: 0 })
-const touchDragging = ref(false)
 
 const handleTouchStart = (event) => {
   if (event.touches.length === 1) {
     const touch = event.touches[0]
     touchStart.value = { x: touch.clientX, y: touch.clientY }
-
-    // Enable drag mode if zoomed
-    if (zoomLevel.value > 1) {
-      touchDragging.value = true
-      dragStart.value = { x: touch.clientX, y: touch.clientY }
-      event.preventDefault()
-    }
-  }
-}
-
-const handleTouchMove = (event) => {
-  if (event.touches.length === 1 && touchDragging.value && zoomLevel.value > 1) {
-    const touch = event.touches[0]
-    const deltaX = (touch.clientX - dragStart.value.x) / zoomLevel.value
-    const deltaY = (touch.clientY - dragStart.value.y) / zoomLevel.value
-
-    imagePosition.value = {
-      x: imagePosition.value.x + deltaX,
-      y: imagePosition.value.y + deltaY,
-    }
-
-    dragStart.value = {
-      x: touch.clientX,
-      y: touch.clientY,
-    }
-
-    event.preventDefault()
   }
 }
 
@@ -853,12 +700,6 @@ const handleTouchEnd = (event) => {
   if (event.changedTouches.length === 1) {
     const touch = event.changedTouches[0]
     touchEnd.value = { x: touch.clientX, y: touch.clientY }
-
-    // If was dragging, don't trigger navigation
-    if (touchDragging.value) {
-      touchDragging.value = false
-      return
-    }
 
     // Calculate swipe distance
     const deltaX = touchEnd.value.x - touchStart.value.x
@@ -878,8 +719,6 @@ const handleTouchEnd = (event) => {
       }
     }
   }
-
-  touchDragging.value = false
 }
 
 // Keyboard navigation
