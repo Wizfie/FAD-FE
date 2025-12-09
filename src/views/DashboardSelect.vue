@@ -100,7 +100,7 @@
 
         <!-- Dashboard TPS -->
         <div
-          @click="navigateTo('gallery')"
+          @click="navigateTo('dashboard-tps')"
           class="group cursor-pointer bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 hover:shadow-xl hover:border-green-300 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-2"
         >
           <div class="text-center">
@@ -223,8 +223,8 @@ const authStore = useAuthStore()
 const navigateTo = (dashboard) => {
   if (dashboard === 'dashboard-fad') {
     router.push({ name: 'dashboard-fad' })
-  } else if (dashboard === 'gallery') {
-    router.push({ name: 'gallery' })
+  } else if (dashboard === 'dashboard-tps') {
+    router.push({ name: 'dashboard-tps' })
   }
 }
 

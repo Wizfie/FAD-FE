@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import api from '@/stores/axios.js'
-import { downloadCSV, generateFilename, cleanObject } from '@/utils/commonUtils.js'
+import { downloadCSV, generateFilename, cleanObject } from '@/utils/helper.js'
 
 /**
  * Composable untuk export functionality
@@ -89,44 +89,21 @@ export function useExport(endpoint, options = {}) {
  * @returns {Object} FAD export state dan methods
  */
 export function useFadExport() {
-  const { isExporting, exportError, exportProgress, exportData, clearError } =
-    useExport('/api/v1/export-fad')
+  const { isExporting, exportError, exportData } = useExport('/api/v1/export-fad')
 
-  // Export dengan filter status
-  const exportByStatus = async (status, additionalParams = {}) => {
-    const params = { status, ...additionalParams }
-    const filename = `fad-export-${status.toLowerCase()}`
-
-    return exportData(params, filename)
-  }
-
-  // Export dengan filter tanggal
-  const exportByDateRange = async (from, to, additionalParams = {}) => {
-    const params = { from, to, ...additionalParams }
-    const filename = `fad-export-${from}-${to}`
-
-    return exportData(params, filename)
-  }
-
-  // Export semua data
-  const exportAll = async (additionalParams = {}) => {
-    const params = { all: true, ...additionalParams }
-    const filename = 'fad-export-all'
-
-    return exportData(params, filename)
+  // Export semua data dengan filter
+  const exportAll = async (filters = {}) => {
+    const filename = 'fad-export'
+    return exportData(filters, filename)
   }
 
   return {
     // State
     isExporting,
     exportError,
-    exportProgress,
 
     // Methods
-    exportByStatus,
-    exportByDateRange,
     exportAll,
-    clearError,
   }
 }
 

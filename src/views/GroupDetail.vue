@@ -11,12 +11,7 @@
           Dashboard
         </router-link>
         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 5l7 7-7 7"
-          ></path>
+          <path stroke-linecap="round" stroke-line stroke-width="2" d="M9 5l7 7-7 7"></path>
         </svg>
         <router-link
           :to="{ name: 'area-detail', params: { id: areaId }, query: { name: areaName } }"
@@ -81,7 +76,8 @@
         </div>
         <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
           <div
-            class="bg-blue-600 h-2 rounded-full transition-all"
+            :class="getProgressBarClass(group)"
+            class="h-2 rounded-full transition-all"
             :style="{ width: `${getGroupProgressPercentage(group)}%` }"
           ></div>
         </div>
@@ -147,6 +143,7 @@
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
+                @deleted="handlePhotoDeleted"
               />
             </div>
 
@@ -164,6 +161,7 @@
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
+                @deleted="handlePhotoDeleted"
               />
             </div>
 
@@ -181,6 +179,7 @@
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
+                @deleted="handlePhotoDeleted"
               />
             </div>
           </div>
@@ -202,9 +201,7 @@
                   clip-rule="evenodd"
                 />
               </svg>
-              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-                📝 Ringkasan Perbandingan
-              </h2>
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white">📝 Ringkasan</h2>
             </div>
 
             <!-- Edit Button (Admin Only) -->
@@ -273,14 +270,12 @@
                   </button>
                 </div>
               </div>
-              <div
+              <textarea
                 ref="summaryEditor"
-                contenteditable="true"
-                class="p-4 min-h-[200px] bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none"
-                @input="updateSummaryText"
-                v-html="editSummaryText"
+                v-model="editSummaryText"
+                class="p-4 min-h-[200px] w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none resize-none"
                 placeholder="Tulis ringkasan perbandingan..."
-              ></div>
+              ></textarea>
             </div>
 
             <div class="flex gap-3">
@@ -322,7 +317,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PhotoSlot from '@/components/PhotoSlot.vue'
 import PhotoLightbox from '@/components/PhotoLightbox.vue'
@@ -363,12 +358,8 @@ const loadData = async () => {
   errorMsg.value = ''
 
   try {
-    console.log('🔍 Loading group:', groupId.value)
-
     const response = await api.get(`/api/comparison-groups/${groupId.value}`)
     group.value = response.data
-
-    console.log('✅ Group loaded:', group.value)
   } catch (error) {
     console.error('❌ Error loading group:', error)
     errorMsg.value = error.response?.data?.message || error.message || 'Gagal memuat data grup'
@@ -392,6 +383,17 @@ const getGroupPhotoCount = (group) => {
 const getGroupProgressPercentage = (group) => {
   const count = getGroupPhotoCount(group)
   return Math.round((count / 3) * 100)
+}
+
+const getProgressBarClass = (group) => {
+  const percentage = getGroupProgressPercentage(group)
+  if (percentage === 0) {
+    return 'bg-red-500' // Belum mulai - merah
+  } else if (percentage < 100) {
+    return 'bg-yellow-500' // In progress - kuning
+  } else {
+    return 'bg-green-500' // Selesai - hijau
+  }
 }
 
 const isGroupComplete = (group) => {
@@ -419,20 +421,122 @@ const getGroupStatusText = (group) => {
 
 // Rich text editor functions
 const formatText = (command) => {
-  document.execCommand(command, false, null)
-  if (summaryEditor.value) {
-    summaryEditor.value.focus()
-  }
-}
+  const textarea = summaryEditor.value
+  if (!textarea) return
 
-const updateSummaryText = (event) => {
-  editSummaryText.value = event.target.innerHTML
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const selectedText = textarea.value.substring(start, end)
+
+  let replacement = ''
+  let newCursorPos = start
+
+  if (command === 'bold') {
+    replacement = `**${selectedText}**`
+    newCursorPos = start + replacement.length
+  } else if (command === 'italic') {
+    replacement = `_${selectedText}_`
+    newCursorPos = start + replacement.length
+  } else if (command === 'insertUnorderedList') {
+    if (selectedText) {
+      // Convert selected text to bullet list
+      replacement = selectedText
+        .split('\n')
+        .map((line) => {
+          const trimmed = line.trim()
+          if (trimmed && !trimmed.match(/^[-•*]\s+/)) {
+            return `- ${trimmed}`
+          }
+          return line
+        })
+        .join('\n')
+      newCursorPos = start + replacement.length
+    } else {
+      // Insert bullet point
+      replacement = '- '
+      newCursorPos = start + 2
+    }
+  }
+
+  const newValue = textarea.value.substring(0, start) + replacement + textarea.value.substring(end)
+  editSummaryText.value = newValue
+
+  nextTick(() => {
+    textarea.focus()
+    if (selectedText) {
+      textarea.setSelectionRange(newCursorPos, newCursorPos)
+    } else {
+      textarea.setSelectionRange(start + replacement.length, start + replacement.length)
+    }
+  })
 }
 
 // Summary editing functions
 const startEditSummary = () => {
   editingStandardSummary.value = true
-  editSummaryText.value = group.value.summary || ''
+
+  // If there's existing HTML content, convert it to markdown-like format for editing
+  if (group.value.summary) {
+    editSummaryText.value = convertHTMLToMarkdown(group.value.summary)
+  } else {
+    editSummaryText.value = ''
+  }
+
+  nextTick(() => {
+    if (summaryEditor.value) {
+      summaryEditor.value.focus()
+    }
+  })
+}
+
+// Convert HTML back to markdown-style for editing
+const convertHTMLToMarkdown = (html) => {
+  // Create a temporary div to parse the HTML
+  const tempDiv = document.createElement('div')
+  tempDiv.innerHTML = html
+
+  // Process bullet lists
+  const lists = tempDiv.querySelectorAll('ul')
+  lists.forEach((list) => {
+    const items = list.querySelectorAll('li')
+    let markdownList = ''
+
+    items.forEach((item) => {
+      markdownList += `- ${item.textContent}\n`
+    })
+
+    // Replace the list with our markdown version
+    const textNode = document.createTextNode(markdownList)
+    list.parentNode.replaceChild(textNode, list)
+  })
+
+  // Convert <strong> to **text**
+  const strongs = tempDiv.querySelectorAll('strong')
+  strongs.forEach((strong) => {
+    const text = strong.textContent
+    const markdownStrong = `**${text}**`
+    const textNode = document.createTextNode(markdownStrong)
+    strong.parentNode.replaceChild(textNode, strong)
+  })
+
+  // Convert <em> to _text_
+  const ems = tempDiv.querySelectorAll('em')
+  ems.forEach((em) => {
+    const text = em.textContent
+    const markdownEm = `_${text}_`
+    const textNode = document.createTextNode(markdownEm)
+    em.parentNode.replaceChild(textNode, em)
+  })
+
+  // Convert paragraphs
+  const paragraphs = tempDiv.querySelectorAll('p')
+  paragraphs.forEach((p, index) => {
+    if (index < paragraphs.length - 1) {
+      p.insertAdjacentText('afterend', '\n')
+    }
+  })
+
+  return tempDiv.textContent || ''
 }
 
 const cancelEditSummary = () => {
@@ -442,33 +546,97 @@ const cancelEditSummary = () => {
 
 const saveSummary = async () => {
   try {
-    console.log('💾 Saving summary for group:', group.value.id)
+    // Convert markdown-style formatting to HTML
+    const formattedHTML = convertMarkdownToHTML(editSummaryText.value)
 
     await api.put(`/api/comparison-groups/${group.value.id}`, {
-      summary: editSummaryText.value,
+      summary: formattedHTML,
     })
 
     // Update local data
-    group.value.summary = editSummaryText.value
+    group.value.summary = formattedHTML
     editingStandardSummary.value = false
-
-    console.log('✅ Summary saved successfully')
   } catch (error) {
     console.error('❌ Failed to save summary:', error)
     alert('Gagal menyimpan ringkasan. Silakan coba lagi.')
   }
 }
 
+// Convert markdown-style formatting to HTML
+const convertMarkdownToHTML = (text) => {
+  if (!text) return ''
+
+  // Convert bold (**text**) to <strong>
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+
+  // Convert italic (_text_) to <em>
+  text = text.replace(/_(.*?)_/g, '<em>$1</em>')
+
+  // Convert bullet lists
+  const lines = text.split('\n')
+  let html = ''
+  let inList = false
+
+  for (const line of lines) {
+    const trimmed = line.trim()
+
+    if (trimmed.match(/^[-•*]\s+/)) {
+      if (!inList) {
+        html += '<ul class="list-disc list-inside space-y-1 mb-2">'
+        inList = true
+      }
+      const content = trimmed.replace(/^[-•*]\s+/, '')
+      html += `<li>${content}</li>`
+    } else {
+      if (inList) {
+        html += '</ul>'
+        inList = false
+      }
+      if (trimmed) {
+        html += `<p class="mb-2">${trimmed}</p>`
+      } else {
+        html += '<br>'
+      }
+    }
+  }
+
+  if (inList) {
+    html += '</ul>'
+  }
+
+  return html
+}
+
 // Photo upload handler
 const handlePhotoUpload = (data) => {
-  console.log('📸 Handle photo upload:', data)
   loadData() // Reload to get updated photos
+}
+
+// Photo delete handler
+const handlePhotoDeleted = (deletedPhoto) => {
+  // Remove photo from local state
+  if (group.value && group.value.photos) {
+    group.value.photos = group.value.photos.filter((photo) => photo.id !== deletedPhoto.id)
+  }
+  // Optionally reload data to ensure consistency
+  loadData()
+}
+
+// Photo replace handler
+const handlePhotoReplaced = (data) => {
+  // Update photo in local state
+  if (group.value && group.value.photos) {
+    const index = group.value.photos.findIndex((photo) => photo.id === data.oldPhoto.id)
+    if (index !== -1) {
+      group.value.photos[index] = data.newPhoto
+    }
+  }
+  // Optionally reload data to ensure consistency
+  loadData()
 }
 
 // Photo view handler
 const viewPhoto = (group, photo, category) => {
-  console.log('🖼️ ViewPhoto called:', { group, photo, category })
-
   const allPhotos = group?.photos || []
   const orderedCategories = ['BEFORE', 'ACTION', 'AFTER']
 

@@ -68,16 +68,18 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import TableComponent from '@/components/TableComponent.vue'
 import Pagination from '@/components/Pagination.vue'
 import NavGroup from '@/components/NavGroup.vue'
-import { fmtDateToDDMMYYYY } from '@/utils/helper.js'
 import api from '@/stores/axios.js'
 
+const route = useRoute()
 const dataFad = ref([])
 const currentPage = ref(1)
 const itemsPerPage = 10
-const searchQuery = ref('')
+// Ambil query parameter 'q' dari URL untuk filter plant
+const searchQuery = ref(route.query.q || '')
 const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
@@ -147,9 +149,9 @@ const getData = async (page = currentPage.value) => {
         noFad: item.noFad ?? '',
         item: item.item ?? '',
         plant: item.plant ?? '',
-        terimaFad: fmtDateToDDMMYYYY(item.terimaFad),
-        terimaBbm: fmtDateToDDMMYYYY(item.terimaBbm),
-        bast: fmtDateToDDMMYYYY(item.bast),
+        terimaFad: item.terimaFad ?? '',
+        terimaBbm: item.terimaBbm ?? '',
+        bast: item.bast ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',

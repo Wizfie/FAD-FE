@@ -1,4 +1,3 @@
-// stores/axios.js
 import axios from 'axios'
 import { useAuthStore } from './auth'
 
@@ -9,7 +8,6 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  // ⚠️ kalau diminta skip, langsung return tanpa nambah header
   if (config.__skipAuth) return config
 
   const auth = useAuthStore()
@@ -20,14 +18,19 @@ api.interceptors.request.use((config) => {
 })
 
 let isRefreshing = false
-let waiters = []
+let failedQueue = []
 const AUTH_PATH_RE = /\/api\/(login|refresh|logout)/i
 
-function queue(cb) {
-  waiters.push(cb)
-}
-function flush(newToken) {
-  waiters.splice(0).forEach((cb) => cb(newToken))
+function processQueue(error, token = null) {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error)
+    } else {
+      resolve(token)
+    }
+  })
+
+  failedQueue = []
 }
 
 api.interceptors.response.use(
@@ -36,54 +39,72 @@ api.interceptors.response.use(
     const { config, response } = error
     if (!response) return Promise.reject(error)
 
-    // 1) bukan 401 -> lempar
-    if (response.status !== 401) return Promise.reject(error)
+    if (response.status !== 401) return Promise.reject(error) // Jika bukan error 401, teruskan
 
-    // 2) request ini minta skip -> jangan apa2
-    if (config.__skipAuth) return Promise.reject(error)
+    if (config.__skipAuth) return Promise.reject(error) // Jika ada flag skipAuth
 
-    // 3) endpoint auth sendiri -> jangan refresh; logout lokal + redirect
     if (AUTH_PATH_RE.test(config.url || '')) {
+      // Untuk endpoint login/refresh/logout
       const auth = useAuthStore()
       await auth.logout({ server: false, alert: false })
       window.location.replace('/login')
       return Promise.reject(error)
     }
 
-    // 4) cegah infinite retry
-    if (config.__isRetryRequest) {
+    if (config._retry) {
+      // Jika sudah retry, logout dan arahkan ke login
       const auth = useAuthStore()
       await auth.logout({ server: false, alert: false })
       window.location.replace('/login')
       return Promise.reject(error)
     }
 
-    // 5) single-flight refresh
     const auth = useAuthStore()
-    if (!isRefreshing) {
-      isRefreshing = true
-      const ok = await auth.refreshToken() // method di store (pakai flag skip)
-      isRefreshing = false
 
-      if (!ok) {
+    // Jika sedang refresh token, tambahkan request ke queue
+    if (isRefreshing) {
+      return new Promise((resolve, reject) => {
+        failedQueue.push({
+          resolve: (token) => {
+            config.headers.Authorization = `Bearer ${token}`
+            config._retry = true
+            resolve(api(config))
+          },
+          reject: (err) => {
+            reject(err)
+          },
+        })
+      })
+    }
+
+    // Mark sebagai sedang refresh dan coba refresh token
+    isRefreshing = true
+    config._retry = true
+
+    try {
+      const success = await auth.refreshToken()
+
+      if (success && auth.accessToken) {
+        // Token refresh berhasil
+        processQueue(null, auth.accessToken)
+        config.headers.Authorization = `Bearer ${auth.accessToken}`
+        return api(config) // Retry request asli
+      } else {
+        // Token refresh gagal
+        processQueue(error, null)
         await auth.logout({ server: false, alert: false })
         window.location.replace('/login')
         return Promise.reject(error)
       }
-      flush(auth.getAccessToken)
+    } catch (refreshError) {
+      console.error('Error saat refresh token:', refreshError)
+      processQueue(refreshError, null)
+      await auth.logout({ server: false, alert: false })
+      window.location.replace('/login')
+      return Promise.reject(refreshError)
+    } finally {
+      isRefreshing = false
     }
-
-    return new Promise((resolve, reject) => {
-      queue((newToken) => {
-        try {
-          config.headers['Authorization'] = `Bearer ${newToken}`
-          config.__isRetryRequest = true
-          resolve(api(config))
-        } catch (e) {
-          reject(e)
-        }
-      })
-    })
   },
 )
 

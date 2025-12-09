@@ -60,8 +60,10 @@
         <div v-if="photosByCategory.BEFORE?.length">
           <img
             :src="
-              photosByCategory.BEFORE[activeIndex.BEFORE]?.thumbUrl ||
-              photosByCategory.BEFORE[activeIndex.BEFORE]?.url
+              getImageUrl(
+                photosByCategory.BEFORE[activeIndex.BEFORE]?.thumbUrl ||
+                  photosByCategory.BEFORE[activeIndex.BEFORE]?.url,
+              )
             "
             class="w-full h-64 object-cover mb-2"
             @click="openLightbox(photosByCategory.BEFORE[activeIndex.BEFORE])"
@@ -73,7 +75,7 @@
             <div class="flex items-start space-x-2">
               <div v-for="(p, idx) in photosByCategory.BEFORE" :key="p.id" class="text-center">
                 <img
-                  :src="p.thumbUrl || p.url"
+                  :src="getImageUrl(p.thumbUrl || p.url)"
                   :class="[
                     'w-20 h-14 object-cover rounded',
                     { 'ring-2 ring-blue-400': activeIndex.BEFORE === idx },
@@ -97,8 +99,10 @@
         <div v-if="photosByCategory.ACTION?.length">
           <img
             :src="
-              photosByCategory.ACTION[activeIndex.ACTION]?.thumbUrl ||
-              photosByCategory.ACTION[activeIndex.ACTION]?.url
+              getImageUrl(
+                photosByCategory.ACTION[activeIndex.ACTION]?.thumbUrl ||
+                  photosByCategory.ACTION[activeIndex.ACTION]?.url,
+              )
             "
             class="w-full h-64 object-cover mb-2"
             @click="openLightbox(photosByCategory.ACTION[activeIndex.ACTION])"
@@ -110,7 +114,7 @@
             <div class="flex items-start space-x-2">
               <div v-for="(p, idx) in photosByCategory.ACTION" :key="p.id" class="text-center">
                 <img
-                  :src="p.thumbUrl || p.url"
+                  :src="getImageUrl(p.thumbUrl || p.url)"
                   :class="[
                     'w-20 h-14 object-cover rounded',
                     { 'ring-2 ring-blue-400': activeIndex.ACTION === idx },
@@ -134,8 +138,10 @@
         <div v-if="photosByCategory.AFTER?.length">
           <img
             :src="
-              photosByCategory.AFTER[activeIndex.AFTER]?.thumbUrl ||
-              photosByCategory.AFTER[activeIndex.AFTER]?.url
+              getImageUrl(
+                photosByCategory.AFTER[activeIndex.AFTER]?.thumbUrl ||
+                  photosByCategory.AFTER[activeIndex.AFTER]?.url,
+              )
             "
             class="w-full h-64 object-cover mb-2"
             @click="openLightbox(photosByCategory.AFTER[activeIndex.AFTER])"
@@ -147,7 +153,7 @@
             <div class="flex items-start space-x-2">
               <div v-for="(p, idx) in photosByCategory.AFTER" :key="p.id" class="text-center">
                 <img
-                  :src="p.thumbUrl || p.url"
+                  :src="getImageUrl(p.thumbUrl || p.url)"
                   :class="[
                     'w-20 h-14 object-cover rounded',
                     { 'ring-2 ring-blue-400': activeIndex.AFTER === idx },
@@ -375,7 +381,7 @@ Contoh:
       <!-- Main Image Area -->
       <div class="flex items-center justify-center h-full overflow-hidden p-16">
         <img
-          :src="lightbox.photo?.url || lightbox.photo?.thumbUrl"
+          :src="getImageUrl(lightbox.photo?.url || lightbox.photo?.thumbUrl)"
           :style="{
             transform: `scale(${lightbox.scale}) translate(${lightbox.translateX}px, ${lightbox.translateY}px)`,
           }"
@@ -408,6 +414,9 @@ Contoh:
 import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import api from '@/stores/axios'
 import { useAuthStore } from '@/stores/auth'
+import { useImageUrl } from '@/composables/useImageUrl'
+
+const { getImageUrl } = useImageUrl()
 
 const props = defineProps({
   group: { type: Object, required: true },

@@ -45,6 +45,12 @@ const router = createRouter({
       meta: { requiresAuth: true, role: 'ADMIN' },
     },
     {
+      path: '/audit-logs',
+      name: 'audit-logs',
+      component: () => import('@/views/AuditLog.vue'),
+      meta: { requiresAuth: true, role: 'ADMIN' },
+    },
+    {
       path: '/open',
       name: 'openView',
       component: () => import('@/views/OpenFad.vue'),
@@ -96,6 +102,12 @@ const router = createRouter({
       path: '/tps/area/:areaId/groups/:groupId',
       name: 'group-detail',
       component: () => import('@/views/GroupDetail.vue'),
+      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+    },
+    {
+      path: '/program-5r',
+      name: 'program-info',
+      component: () => import('@/views/ProgramInfo.vue'),
       meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
     },
   ],

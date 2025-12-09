@@ -4,6 +4,12 @@
     class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50"
     @click="handleOverlayClick"
     @keydown.esc="close"
+    @keydown.i="toggleInfo"
+    @keydown.left="goToPrevious"
+    @keydown.right="goToNext"
+    @keydown.plus="zoomIn"
+    @keydown.minus="zoomOut"
+    @keydown.0="resetZoom"
     tabindex="0"
   >
     <!-- Close Button -->
@@ -23,6 +29,7 @@
       v-if="hasPrevious"
       @click="goToPrevious"
       class="absolute left-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-60 p-2"
+      title="Previous (←)"
     >
       <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -38,6 +45,7 @@
       v-if="hasNext"
       @click="goToNext"
       class="absolute right-4 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-300 z-60 p-2"
+      title="Next (→)"
     >
       <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -54,9 +62,6 @@
       class="relative flex items-center justify-center"
       style="width: 90vw; height: 90vh"
       @click.stop
-      @mouseenter="showInfoTemporary"
-      @mousemove="showInfoTemporary"
-      @touchstart="showInfoTemporary"
     >
       <!-- Loading Indicator -->
       <div
@@ -81,7 +86,7 @@
         <!-- Main Photo -->
         <img
           ref="photoImg"
-          :src="currentPhoto?.url"
+          :src="getImageUrl(currentPhoto?.url)"
           :alt="getCategoryText(currentPhoto?.category)"
           class="block max-w-full max-h-full object-contain select-none"
           :class="{
@@ -103,7 +108,7 @@
     <button
       @click="toggleInfo"
       class="absolute top-4 left-4 bg-black/70 backdrop-blur-sm text-white p-2.5 rounded-lg hover:bg-black/80 transition-all z-60 border border-white/10"
-      title="Toggle Info"
+      title="Toggle Info (Press 'i')"
     >
       <svg v-if="!showInfo" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
@@ -159,7 +164,7 @@
               clip-rule="evenodd"
             />
           </svg>
-          {{ formatDate(currentPhoto?.createdAt) }}
+          {{ formatDate(currentPhoto?.takenAt || currentPhoto?.createdAt) }}
         </div>
 
         <!-- Caption -->
@@ -214,7 +219,7 @@
       <button
         @click="zoomIn"
         class="bg-black/70 backdrop-blur-sm text-white p-2.5 rounded-lg hover:bg-black/80 transition-all border border-white/10"
-        title="Zoom In"
+        title="Zoom In (+)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -229,7 +234,7 @@
       <button
         @click="zoomOut"
         class="bg-black/70 backdrop-blur-sm text-white p-2.5 rounded-lg hover:bg-black/80 transition-all border border-white/10"
-        title="Zoom Out"
+        title="Zoom Out (-)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -244,7 +249,7 @@
       <button
         @click="resetZoom"
         class="bg-black/70 backdrop-blur-sm text-white p-2.5 rounded-lg hover:bg-black/80 transition-all border border-white/10"
-        title="Reset Zoom"
+        title="Reset Zoom (0)"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -261,6 +266,9 @@
 
 <script setup>
 import { ref, computed, watch, nextTick, onBeforeUnmount } from 'vue'
+import { useImageUrl } from '@/composables/useImageUrl'
+
+const { getImageUrl } = useImageUrl()
 
 const props = defineProps({
   isOpen: {
@@ -319,25 +327,31 @@ const photoTransformStyle = computed(() => ({
 watch(
   () => props.isOpen,
   (newVal) => {
-    console.log('🔍 Lightbox isOpen changed:', newVal)
     if (newVal) {
-      console.log('🔍 Lightbox opening with:', {
-        photos: props.photos.length,
-        initialIndex: props.initialPhotoIndex,
-      })
       currentIndex.value = props.initialPhotoIndex
+      showInfo.value = false // Hide info by default when lightbox opens
+      // Reset zoom only when first opening lightbox
       resetZoom()
       nextTick(() => {
         // Focus the lightbox for keyboard navigation
         const lightbox = document.querySelector('[tabindex="0"]')
         if (lightbox) lightbox.focus()
       })
+    } else {
+      // Clear timer when lightbox closes
+      if (infoTimer.value) {
+        clearTimeout(infoTimer.value)
+        infoTimer.value = null
+      }
     }
   },
 )
 
 watch(currentIndex, () => {
-  resetZoom()
+  // Don't reset zoom level, but reset position to center
+  zoomX.value = 0
+  zoomY.value = 0
+  showInfo.value = false // Hide info when navigating between photos
   imageLoading.value = true
 })
 
@@ -432,33 +446,10 @@ const endDrag = () => {
 const toggleInfo = () => {
   showInfo.value = !showInfo.value
 
-  // Clear existing timer
+  // Clear existing timer if any
   if (infoTimer.value) {
     clearTimeout(infoTimer.value)
     infoTimer.value = null
-  }
-
-  // Auto-hide after 5 seconds if showing
-  if (showInfo.value) {
-    infoTimer.value = setTimeout(() => {
-      showInfo.value = false
-    }, 5000)
-  }
-}
-
-const showInfoTemporary = () => {
-  if (!showInfo.value) {
-    showInfo.value = true
-
-    // Clear existing timer
-    if (infoTimer.value) {
-      clearTimeout(infoTimer.value)
-    }
-
-    // Auto-hide after 3 seconds
-    infoTimer.value = setTimeout(() => {
-      showInfo.value = false
-    }, 3000)
   }
 }
 

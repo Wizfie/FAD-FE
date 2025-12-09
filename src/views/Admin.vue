@@ -1,94 +1,81 @@
 <template>
-  <section class="container px-4 py-4 mx-auto overflow-visible">
+  <section class="container px-4 py-4 mx-auto relative">
     <!-- Header dengan Menu -->
-    <AdminHeader
-      title="Dashboard FAD ADMIN"
-      :total-items="meta.total"
-      :show-menu="authStore.canCreate || authStore.canEdit || authStore.canDelete"
-    >
-      <template #menu>
-        <div>
-          <button
-            v-if="authStore.canCreate"
-            @click="handleAddFad"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Tambah FAD
-          </button>
+    <div class="mb-6">
+      <AdminHeader
+        title="Dashboard FAD ADMIN"
+        :total-items="meta.total"
+        :show-menu="authStore.canCreate || authStore.canEdit || authStore.canDelete"
+      >
+        <template #menu>
+          <div>
+            <button
+              v-if="authStore.canCreate"
+              @click="handleAddFad"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Tambah FAD
+            </button>
 
-          <button
-            @click="handleNavigation('vendor')"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-              />
-            </svg>
-            Vendor
-          </button>
+            <button
+              @click="handleNavigation('vendor')"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
+              Vendor
+            </button>
 
-          <button
-            @click="handleOpenSecurityLogs"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-              />
-            </svg>
-            Security Logs
-          </button>
+            <button
+              @click="handleNavigation('audit-logs')"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Audit Log
+            </button>
 
-          <button
-            @click="handleOpenChangelog"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-            Changelog
-          </button>
-
-          <button
-            @click="handleOpenExport"
-            class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-          >
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-            Export Data
-          </button>
-        </div>
-      </template>
-    </AdminHeader>
+            <button
+              @click="handleOpenExport"
+              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+            >
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              Export Data
+            </button>
+          </div>
+        </template>
+      </AdminHeader>
+    </div>
 
     <!-- Mobile Actions Button -->
-    <div class="sm:hidden fixed bottom-4 right-4 z-20">
+    <div class="sm:hidden fixed bottom-4 right-4 z-30">
       <BaseButton
         variant="primary"
         size="lg"
@@ -137,6 +124,21 @@
         </button>
 
         <button
+          @click="handleNavigation('audit-logs')"
+          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+            />
+          </svg>
+          Audit Log
+        </button>
+
+        <button
           @click="handleNavigation('gallery')"
           class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
@@ -164,36 +166,6 @@
             />
           </svg>
           User Management
-        </button>
-
-        <button
-          @click="handleOpenSecurityLogs"
-          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-          </svg>
-          Security Logs
-        </button>
-
-        <button
-          @click="handleOpenChangelog"
-          class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-            />
-          </svg>
-          Changelog
         </button>
 
         <button
@@ -244,8 +216,8 @@
       </div>
     </div>
 
-    <!-- Table -->
-    <TableComponent
+    <!-- Admin Table -->
+    <AdminTableComponent
       :headers="headers"
       :body-data="data"
       :current-page="currentPage"
@@ -253,6 +225,7 @@
       :edit-table="authStore.canEdit ? handleEdit : null"
       :delete-table="authStore.canDelete ? handleDelete : null"
       :show-action="authStore.canEdit || authStore.canDelete"
+      :disable-sticky="true"
     />
 
     <!-- Pagination -->
@@ -398,21 +371,11 @@
         </div>
       </div>
     </BaseModal>
-
-    <!-- Security Logs Modal -->
-    <BaseModal v-model="securityLogsModal.isOpen.value" title="Security Logs" size="2xl">
-      <SecurityLogs @close="securityLogsModal.close" />
-    </BaseModal>
-
-    <!-- Changelog Modal -->
-    <BaseModal v-model="changelogModal.isOpen.value" title="Changelog" size="2xl">
-      <ChangelogViewer @close="changelogModal.close" />
-    </BaseModal>
   </section>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 
@@ -422,10 +385,8 @@ import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
 import MobileSheet from '@/components/MobileSheet.vue'
-import TableComponent from '@/components/TableComponent.vue'
+import AdminTableComponent from '@/components/AdminTableComponent.vue'
 import FormFad from '@/components/FormFad.vue'
-import SecurityLogs from '@/components/SecurityLogs.vue'
-import ChangelogViewer from '@/components/ChangelogViewer.vue'
 import LastUpdate from '@/components/LastUpdate.vue'
 
 // Composables
@@ -457,8 +418,6 @@ const { data, meta, loading, searchQuery, paginate, refresh } = useFadData('', {
 // Modals
 const mobileSheetModal = useModal()
 const exportModal = useModal()
-const securityLogsModal = useModal()
-const changelogModal = useModal()
 
 // Form management
 const formToggle = useFormToggle({
@@ -483,8 +442,6 @@ const exportFilters = ref({
   status: '',
   startDate: '',
   endDate: '',
-  includeImages: true,
-  includeComments: true,
 })
 
 // Table configuration
@@ -493,10 +450,10 @@ const headers = [
   'No FAD',
   'Item',
   'Plant',
-  'Vendor',
   'Terima FAD',
   'Terima BBM',
   'Tanggal Serah Terima',
+  'Vendor',
   'Status',
   'Deskripsi',
   'Keterangan',
@@ -539,32 +496,13 @@ const handleAddFadMobile = () => {
 }
 
 const handleEdit = (row) => {
+  // Additional debugging - check all vendor-related data
   formToggle.startEdit(row)
 }
 
 const handleDelete = async (row) => {
-  console.log('🗑️ Delete action called with row data:', row)
-  console.log('🗑️ Row keys:', Object.keys(row))
-  console.log('🗑️ Row values:', {
-    id: row.id,
-    noFad: row.noFad,
-    item: row.item,
-    plant: row.plant,
-    vendor: row.vendor,
-    status: row.status,
-  })
-
   // Show detailed confirmation dialog
   const confirmMessage = `⚠️ KONFIRMASI HAPUS DATA FAD
-
-Apakah Anda yakin ingin menghapus data ini?
-
-📋 Detail Data:
-• No FAD: ${row.noFad || 'N/A'}
-• Item: ${row.item || 'N/A'}
-• Plant: ${row.plant || 'N/A'}
-• Vendor: ${row.vendor || 'N/A'}
-• Status: ${row.status || 'N/A'}
 
 ⚠️ PERINGATAN: Data yang dihapus tidak dapat dikembalikan!
 
@@ -572,13 +510,9 @@ Klik OK untuk menghapus atau Cancel untuk membatalkan.`
 
   if (confirm(confirmMessage)) {
     try {
-      console.log('🗑️ Deleting FAD:', row.id, row.noFad)
-
       const response = await api.delete(`/api/v1/delete-fad/${row.id}`)
 
       if (response.status === 200) {
-        console.log('✅ FAD deleted successfully:', response.data)
-
         // Refresh data dan last update
         await refresh()
         lastUpdateRef.value?.fetchLastUpdate()
@@ -596,23 +530,12 @@ Klik OK untuk menghapus atau Cancel untuk membatalkan.`
 
         console.error(`Delete error (${status}):`, errorMessage)
 
-        if (status === 401) {
-          alert('❌ Sesi login telah berakhir. Silakan login kembali.')
-        } else if (status === 403) {
-          alert('❌ Anda tidak memiliki akses untuk menghapus data.')
-        } else if (status === 404) {
-          alert('❌ Data tidak ditemukan. Mungkin sudah dihapus sebelumnya.')
-        } else if (status === 500) {
+        if (status === 500) {
           alert('❌ Terjadi kesalahan di server. Silakan coba lagi.')
         } else {
-          alert(`❌ Gagal menghapus data: ${errorMessage}`)
+          console.error('Error:', error.message)
+          alert(`❌ Terjadi kesalahan: ${error.message}`)
         }
-      } else if (error.request) {
-        console.error('Network error:', error.request)
-        alert('❌ Tidak dapat terhubung ke server. Periksa koneksi internet Anda.')
-      } else {
-        console.error('Error:', error.message)
-        alert(`❌ Terjadi kesalahan: ${error.message}`)
       }
     }
   }
@@ -622,40 +545,8 @@ const handleSubmitForm = async (formData) => {
   formToggle.setSubmitting(true)
 
   try {
-    console.log('📤 Submitting FAD data:', formData)
-    console.log('📤 Is edit mode:', formToggle.isEditMode.value)
-    console.log('📤 Form data ID:', formData.id)
-
-    // Debug: Check received form data
-    console.log('🔍 Form validation check:')
-    console.log(
-      '- noFad:',
-      formData.noFad,
-      '(type:',
-      typeof formData.noFad,
-      ', length:',
-      formData.noFad?.length,
-      ')',
-    )
-    console.log(
-      '- item:',
-      formData.item,
-      '(type:',
-      typeof formData.item,
-      ', length:',
-      formData.item?.length,
-      ')',
-    ) // Validate and format required fields
-    console.log('🔍 Before validation processing:')
-    console.log('- formData.noFad (raw):', formData.noFad)
-    console.log('- formData.item (raw):', formData.item)
-
     let noFad = String(formData.noFad || '').trim()
     const item = String(formData.item || '').trim()
-
-    console.log('🔍 After String() and trim():')
-    console.log('- noFad:', `"${noFad}"`, '(length:', noFad.length, ')')
-    console.log('- item:', `"${item}"`, '(length:', item.length, ')')
 
     if (!noFad || noFad.length === 0) {
       console.error('❌ Client validation FAILED: No FAD is empty')
@@ -670,7 +561,6 @@ const handleSubmitForm = async (formData) => {
 
     // Auto-format No FAD: convert to uppercase
     noFad = noFad.toUpperCase()
-    console.log('📝 Auto-formatted No FAD:', noFad)
 
     // Update formData with formatted No FAD
     formData.noFad = noFad
@@ -686,29 +576,17 @@ const handleSubmitForm = async (formData) => {
       return
     }
 
-    console.log('✅ Validation passed, proceeding with API call...')
-    console.log('✅ Final data to be sent:', {
-      noFad: formData.noFad,
-      item: formData.item,
-      plant: formData.plant,
-      status: formData.status,
-    })
-
     // Call API to save FAD data
     let response
     if (formToggle.isEditMode.value && formData.id) {
       // Update existing FAD
-      console.log('🔄 Updating existing FAD with ID:', formData.id)
       response = await api.put(`/api/v1/update-fad/${formData.id}`, formData)
     } else {
       // Create new FAD
-      console.log('➕ Creating new FAD')
       response = await api.post('/api/v1/save-fad', formData)
     }
 
     if (response.status === 200) {
-      console.log('✅ FAD saved successfully:', response.data)
-
       // Close form and refresh data
       formToggle.closeForm()
       await refresh() // Wait for refresh to complete
@@ -757,15 +635,6 @@ const handleSubmitForm = async (formData) => {
   }
 }
 
-const handleExport = async (params) => {
-  try {
-    await fadExport.exportAll(params)
-    exportModal.close()
-  } catch (error) {
-    console.error('Export error:', error)
-  }
-}
-
 const handleExportWithFilters = async () => {
   try {
     // Prepare filter parameters
@@ -776,10 +645,6 @@ const handleExportWithFilters = async () => {
       // Date filters (always based on createdAt)
       startDate: exportFilters.value.startDate || null,
       endDate: exportFilters.value.endDate || null,
-
-      // Export options
-      includeImages: exportFilters.value.includeImages,
-      includeComments: exportFilters.value.includeComments,
     }
 
     // Remove null values
@@ -801,8 +666,6 @@ const resetFilters = () => {
     status: '',
     startDate: '',
     endDate: '',
-    includeImages: true,
-    includeComments: true,
   }
 }
 
@@ -826,20 +689,7 @@ const handleNavigation = (routeName) => {
   router.push({ name: routeName })
 }
 
-const handleOpenSecurityLogs = () => {
-  securityLogsModal.open()
-}
-
-const handleOpenChangelog = () => {
-  changelogModal.open()
-}
-
 const handleOpenExport = () => {
   exportModal.open()
 }
-
-// Lifecycle
-onMounted(() => {
-  // Any initialization logic
-})
 </script>

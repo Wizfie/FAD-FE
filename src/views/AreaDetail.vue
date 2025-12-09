@@ -17,24 +17,56 @@
           {{ areaName || 'Area Detail' }}
         </h1>
       </div>
-      <p class="text-gray-600 dark:text-gray-400">Monitoring 5R - {{ monthLabel }}</p>
+      <p class="text-gray-600 dark:text-gray-400">Monitoring 5R</p>
     </div>
 
     <!-- Progress Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Grup</h3>
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Total Item 5R</h3>
         <p class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ comparisonGroups.length }}
         </p>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Grup Selesai</h3>
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Item 5R Selesai</h3>
         <p class="text-2xl font-bold text-green-600">{{ completedGroupsCount }}</p>
       </div>
       <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
         <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Progress</h3>
         <p class="text-2xl font-bold text-blue-600">{{ completionPercentage }}%</p>
+      </div>
+    </div>
+
+    <!-- Info Box untuk Grup Berkelanjutan - Hanya tampil di bulan terbaru -->
+    <div v-if="continuousGroupsCount > 0 && isCurrentOrLatestMonth" class="mb-4">
+      <div
+        class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+      >
+        <div class="flex items-start">
+          <svg
+            class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 mr-2 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div class="flex-1">
+            <h4 class="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Item 5R Berkelanjutan Terdeteksi ({{ monthLabel }})
+            </h4>
+            <p class="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              Terdapat {{ continuousGroupsCount }} item 5R yang belum selesai dari bulan sebelumnya.
+              Lanjutkan dokumentasi BEFORE → ACTION → AFTER untuk menyelesaikan monitoring 5R.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -117,8 +149,9 @@
         </div>
       </div>
 
-      <!-- Add Group Button -->
+      <!-- Add Group Button (Admin Only) -->
       <button
+        v-if="authStore.user?.role === 'ADMIN'"
         @click="openAddGroupModal"
         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
       >
@@ -182,15 +215,71 @@
             <!-- Card Header -->
             <div class="p-4 border-b border-gray-200 dark:border-gray-700">
               <div class="flex justify-between items-start mb-2">
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                  {{ group.title || `Grup ${group.id}` }}
-                </h3>
-                <span
-                  class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ml-2"
-                  :class="getGroupStatusClass(group)"
-                >
-                  {{ getGroupStatusText(group) }}
-                </span>
+                <div class="flex-1 mr-2">
+                  <h3 class="text-lg font-semibold text-gray-900 dark:text-white truncate">
+                    {{ group.title || `Grup ${group.id}` }}
+                  </h3>
+                  <!-- Badge grup berkelanjutan -->
+                  <div v-if="isGroupContinuous(group)" class="mt-1">
+                    <span
+                      class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                    >
+                      <svg
+                        class="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Lanjutan
+                    </span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap"
+                    :class="getGroupStatusClass(group)"
+                  >
+                    {{ getGroupStatusText(group) }}
+                  </span>
+                  <!-- Admin Actions -->
+                  <div v-if="canEdit" class="flex items-center gap-1">
+                    <button
+                      @click.stop="editGroup(group)"
+                      class="p-1 text-gray-400 hover:text-blue-600 rounded transition-colors"
+                      title="Edit Grup"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        ></path>
+                      </svg>
+                    </button>
+                    <button
+                      @click.stop="deleteGroup(group)"
+                      class="p-1 text-gray-400 hover:text-red-600 rounded transition-colors"
+                      title="Hapus Grup"
+                    >
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                        ></path>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
               </div>
               <p
                 v-if="group.description"
@@ -209,7 +298,8 @@
                 </div>
                 <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                   <div
-                    class="bg-blue-600 h-1.5 rounded-full transition-all"
+                    :class="getProgressBarClass(group)"
+                    class="h-1.5 rounded-full transition-all"
                     :style="{ width: `${getGroupProgressPercentage(group)}%` }"
                   ></div>
                 </div>
@@ -227,8 +317,10 @@
                   <img
                     v-if="getPhotoByCategory(group.photos, category)"
                     :src="
-                      getPhotoByCategory(group.photos, category).thumbUrl ||
-                      getPhotoByCategory(group.photos, category).url
+                      getImageUrl(
+                        getPhotoByCategory(group.photos, category).thumbUrl ||
+                          getPhotoByCategory(group.photos, category).url,
+                      )
                     "
                     :alt="getCategoryText(category)"
                     class="w-full h-full object-cover"
@@ -257,17 +349,25 @@
             <!-- View Details Indicator -->
             <div class="px-4 pb-3 flex justify-center">
               <svg
-                class="w-4 h-4 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+                version="1.1"
+                id="fi_32195"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                x="0px"
+                y="0px"
+                width="8px"
+                height="8px"
+                viewBox="0 0 451.847 451.847"
+                style="enable-background: new 0 0 451.847 451.847"
+                xml:space="preserve"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                ></path>
+                <g>
+                  <path
+                    d="M225.923,354.706c-8.098,0-16.195-3.092-22.369-9.263L9.27,151.157c-12.359-12.359-12.359-32.397,0-44.751
+		c12.354-12.354,32.388-12.354,44.748,0l171.905,171.915l171.906-171.909c12.359-12.354,32.391-12.354,44.744,0
+		c12.365,12.354,12.365,32.392,0,44.751L248.292,345.449C242.115,351.621,234.018,354.706,225.923,354.706z"
+                  ></path>
+                </g>
               </svg>
             </div>
           </div>
@@ -289,7 +389,7 @@
                 <div class="flex-1">
                   <div class="flex items-center gap-3">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-                      {{ group.title || `Grup ${group.id}` }}
+                      {{ group.title || `Item 5R #${group.id}` }}
                     </h3>
                     <span
                       class="px-2 py-1 rounded-full text-xs font-medium"
@@ -302,12 +402,35 @@
                     {{ group.description }}
                   </p>
 
+                  <!-- Badge grup berkelanjutan -->
+                  <div v-if="isGroupContinuous(group)" class="mt-2">
+                    <span
+                      class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                    >
+                      <svg
+                        class="w-3 h-3 mr-1"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13 9l3 3m0 0l-3 3m3-3H8m13 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Berkelanjutan dari {{ getGroupCreatedMonth(group) }}
+                    </span>
+                  </div>
+
                   <!-- Progress Bar -->
                   <div class="mt-2 flex items-center gap-3">
                     <div class="flex-1">
                       <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                         <div
-                          class="bg-blue-600 h-2 rounded-full transition-all"
+                          :class="getProgressBarClass(group)"
+                          class="h-2 rounded-full transition-all"
                           :style="{ width: `${getGroupProgressPercentage(group)}%` }"
                         ></div>
                       </div>
@@ -349,17 +472,15 @@
           />
         </svg>
       </div>
-      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        Belum ada grup dokumentasi
-      </h3>
+      <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Belum ada item 5R</h3>
       <p class="text-gray-500 dark:text-gray-400 mb-6">
-        Mulai dokumentasi 5R dengan membuat grup perbandingan pertama
+        Mulai dokumentasi 5R dengan membuat item monitoring pertama
       </p>
       <button
         @click="openAddGroupModal"
         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
-        Buat Grup Pertama
+        Buat Item 5R Pertama
       </button>
     </div>
 
@@ -378,10 +499,10 @@
         </svg>
       </div>
       <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-2">
-        Tidak ada grup yang sesuai filter
+        Tidak ada item 5R yang sesuai filter
       </h3>
       <p class="text-gray-500 dark:text-gray-400 mb-6">
-        Coba ubah filter periode atau status untuk melihat grup lainnya
+        Coba ubah filter periode atau status untuk melihat item 5R lainnya
       </p>
       <button
         @click="resetFilters"
@@ -417,8 +538,11 @@ import PhotoSlot from '@/components/PhotoSlot.vue'
 import AddGroupModal from '@/components/AddGroupModal.vue'
 import PhotoLightbox from '@/components/PhotoLightbox.vue'
 import { useModal } from '@/composables/useModal'
+import { useImageUrl } from '@/composables/useImageUrl'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/stores/axios.js'
+
+const { getImageUrl } = useImageUrl()
 
 const route = useRoute()
 const router = useRouter()
@@ -429,15 +553,16 @@ const loading = ref(false)
 const errorMsg = ref('')
 
 // Auth
-const auth = useAuthStore()
-const canEdit = computed(() => auth.user?.role === 'ADMIN')
+const authStore = useAuthStore()
+const canEdit = computed(() => authStore.user?.role === 'ADMIN')
 
 // Edit states (removed - now handled in GroupDetail.vue)
 
 // View and Filter states
 const viewMode = ref('grid') // 'grid' or 'list'
-const selectedMonth = ref('all') // 'all', '1', '2', ..., '12'
-const selectedYear = ref('all') // 'all', '2025', '2024', etc.
+// Baca filter dari query parameters Dashboard TPS, fallback ke bulan/tahun saat ini
+const selectedMonth = ref(route.query.month || (new Date().getMonth() + 1).toString())
+const selectedYear = ref(route.query.year || new Date().getFullYear().toString())
 const selectedStatus = ref('all') // 'all', 'completed', 'in-progress', 'not-started'
 
 // Lightbox states
@@ -499,27 +624,106 @@ const completionPercentage = computed(() => {
   return Math.round((completedGroupsCount.value / comparisonGroups.value.length) * 100)
 })
 
+const continuousGroupsCount = computed(() => {
+  if (selectedMonth.value === 'all') return 0
+  return comparisonGroups.value.filter((group) => isGroupContinuous(group)).length
+})
+
+const isCurrentOrLatestMonth = computed(() => {
+  if (selectedMonth.value === 'all') return false
+
+  const currentDate = new Date()
+  const currentMonth = currentDate.getMonth() + 1
+  const currentYear = currentDate.getFullYear()
+
+  const selectedMonthNum = Number(selectedMonth.value)
+  const selectedYearNum = selectedYear.value !== 'all' ? Number(selectedYear.value) : currentYear
+
+  // Info berkelanjutan muncul ketika sedang melihat bulan yang lebih baru
+  // dari bulan pembuatan grup yang belum selesai
+  const hasIncompleteFromPreviousMonth = comparisonGroups.value.some((group) => {
+    const groupDate = new Date(group.createdAt)
+    const groupMonth = groupDate.getMonth() + 1
+    const groupYear = groupDate.getFullYear()
+    const isIncomplete = getGroupPhotoCount(group) < 3
+
+    // Grup incomplete dari bulan sebelumnya
+    return (
+      isIncomplete &&
+      (groupYear < selectedYearNum ||
+        (groupYear === selectedYearNum && groupMonth < selectedMonthNum))
+    )
+  })
+
+  // Info berkelanjutan HANYA muncul jika:
+  // 1. Ada item incomplete dari bulan sebelumnya
+  // 2. Sedang melihat bulan yang LEBIH BARU dari bulan pembuatan item tersebut
+  const isViewingFutureMonth =
+    hasIncompleteFromPreviousMonth &&
+    comparisonGroups.value.some((group) => {
+      const groupDate = new Date(group.createdAt)
+      const groupMonth = groupDate.getMonth() + 1
+      const groupYear = groupDate.getFullYear()
+      const isIncomplete = getGroupPhotoCount(group) < 3
+
+      // Item incomplete yang bulan pembuatannya < bulan yang sedang dilihat
+      return (
+        isIncomplete &&
+        (groupYear < selectedYearNum ||
+          (groupYear === selectedYearNum && groupMonth < selectedMonthNum))
+      )
+    })
+
+  return isViewingFutureMonth
+})
+
 const filteredGroups = computed(() => {
   let filtered = [...comparisonGroups.value]
 
   // Filter by month and year
-  filtered = filtered.filter((group) => {
-    const groupDate = new Date(group.createdAt)
-    const groupMonth = groupDate.getMonth() + 1 // getMonth() returns 0-11
-    const groupYear = groupDate.getFullYear()
+  if (selectedMonth.value !== 'all' || selectedYear.value !== 'all') {
+    filtered = filtered.filter((group) => {
+      const groupDate = new Date(group.createdAt)
+      const groupMonth = groupDate.getMonth() + 1
+      const groupYear = groupDate.getFullYear()
+      const isIncomplete = getGroupPhotoCount(group) < 3
 
-    // Filter by month
-    if (selectedMonth.value !== 'all' && groupMonth !== Number(selectedMonth.value)) {
-      return false
-    }
+      const selectedMonthNum = Number(selectedMonth.value)
+      const selectedYearNum =
+        selectedYear.value !== 'all' ? Number(selectedYear.value) : new Date().getFullYear()
 
-    // Filter by year
-    if (selectedYear.value !== 'all' && groupYear !== Number(selectedYear.value)) {
-      return false
-    }
+      // Item yang belum selesai (berkelanjutan):
+      // Muncul di bulan pembuatan dan bulan-bulan setelahnya
+      if (isIncomplete) {
+        // Jika filter tahun aktif, pastikan tahun group tidak lebih besar dari filter
+        if (selectedYear.value !== 'all' && groupYear > selectedYearNum) {
+          return false
+        }
 
-    return true
-  })
+        // Item berkelanjutan muncul jika bulan filter >= bulan pembuatan
+        if (selectedMonth.value !== 'all') {
+          const isInPeriod =
+            groupYear < selectedYearNum ||
+            (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
+          return isInPeriod
+        }
+
+        // Jika hanya filter tahun, tampilkan jika tahun <= filter tahun
+        return groupYear <= selectedYearNum
+      }
+
+      // Item yang sudah selesai: hanya muncul di bulan/tahun pembuatannya
+      if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
+        return false
+      }
+
+      if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
+        return false
+      }
+
+      return true
+    })
+  }
 
   // Filter by status
   if (selectedStatus.value !== 'all') {
@@ -556,38 +760,20 @@ const loadData = async () => {
   errorMsg.value = ''
 
   try {
-    console.log('🔄 Loading data for areaId:', areaId.value)
-    console.log('🏷️ Route params:', route.params)
-    console.log('🏷️ AreaId type:', typeof areaId.value)
-    console.log('🏷️ AreaId isNaN:', isNaN(areaId.value))
-
     // Load comparison groups for this area
     const groupsApiUrl = `/api/comparison-groups?areaId=${areaId.value}`
-    console.log('📡 API Call:', groupsApiUrl)
 
     const { data: groupsRes } = await api.get(groupsApiUrl)
-    console.log('📡 Groups Response:', groupsRes)
 
     const groups = groupsRes.items || groupsRes.data?.items || groupsRes.data || groupsRes || []
-    console.log('📊 Parsed Groups:', groups)
-    console.log('📊 Groups is array:', Array.isArray(groups))
-    console.log('🔍 Debug: First group summary:', groups[0]?.summary)
-    console.log(
-      '🔍 Debug: Groups with summary:',
-      groups.filter((g) => g.summary),
-    )
-    console.log('🔍 Debug: User can edit:', canEdit.value)
-    console.log('🔍 Debug: User role:', auth.user?.role)
 
     // Load photos for each group
     const groupsWithPhotos = await Promise.all(
       groups.map(async (group) => {
         try {
           const photosApiUrl = `/api/photos?comparisonGroupId=${group.id}`
-          console.log('📡 Photos API Call:', photosApiUrl)
 
           const { data: photosRes } = await api.get(photosApiUrl)
-          console.log('📡 Photos Response for group', group.id, ':', photosRes)
 
           return {
             ...group,
@@ -601,7 +787,6 @@ const loadData = async () => {
     )
 
     comparisonGroups.value = groupsWithPhotos
-    console.log('✅ Final groups with photos:', comparisonGroups.value)
   } catch (error) {
     console.error('❌ Error loading data:', error)
     errorMsg.value = error.response?.data?.message || error.message || 'Gagal memuat data'
@@ -625,6 +810,33 @@ const getGroupProgressPercentage = (group) => {
   return Math.round((count / 3) * 100)
 }
 
+const getProgressBarClass = (group) => {
+  const percentage = getGroupProgressPercentage(group)
+  if (percentage === 0) {
+    return 'bg-red-500' // Belum mulai - merah
+  } else if (percentage < 100) {
+    return 'bg-yellow-500' // In progress - kuning
+  } else {
+    return 'bg-green-500' // Selesai - hijau
+  }
+}
+
+const isGroupContinuous = (group) => {
+  const groupDate = new Date(group.createdAt)
+  const groupMonth = groupDate.getMonth() + 1
+  const currentMonth =
+    selectedMonth.value !== 'all' ? Number(selectedMonth.value) : new Date().getMonth() + 1
+  const isIncomplete = getGroupPhotoCount(group) < 3
+
+  // Grup berkelanjutan: dibuat di bulan sebelumnya tapi belum selesai
+  return isIncomplete && groupMonth !== currentMonth && selectedMonth.value !== 'all'
+}
+
+const getGroupCreatedMonth = (group) => {
+  const groupDate = new Date(group.createdAt)
+  return groupDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
+}
+
 const getGroupStatusClass = (group) => {
   if (isGroupComplete(group)) {
     return 'bg-green-100 text-green-800'
@@ -642,28 +854,24 @@ const getGroupStatusText = (group) => {
 }
 
 const goBack = () => {
-  router.push({ name: 'dashboard-tps' })
+  // Bawa kembali filter ke Dashboard TPS
+  router.push({
+    name: 'dashboard-tps',
+    query: {
+      month: selectedMonth.value,
+      year: selectedYear.value,
+    },
+  })
 }
 
 const handleGroupCreated = (newGroup) => {
-  console.log('✅ New group created:', newGroup)
-  console.log('🔄 Calling loadData after group creation...')
   setTimeout(() => {
     loadData()
   }, 100)
 }
 
-const handlePhotoUpload = (data) => {
-  console.log('📸 Handle photo upload:', data)
-  loadData()
-}
-
-// Rich text editor functions moved to GroupDetail.vue
-
 // View and Filter methods
 const navigateToGroup = (groupId) => {
-  console.log('🔄 Navigating to group:', { areaId: areaId.value, groupId })
-
   router.push({
     name: 'group-detail',
     params: {
@@ -673,9 +881,72 @@ const navigateToGroup = (groupId) => {
   })
 }
 
+// Edit group function
+const editGroup = (group) => {
+  const newTitle = prompt('Edit nama item 5R:', group.title || `Item 5R #${group.id}`)
+  if (newTitle === null) return // User cancelled
+
+  if (newTitle.trim() === '') {
+    alert('Nama item 5R tidak boleh kosong')
+    return
+  }
+
+  updateGroupTitle(group.id, newTitle.trim())
+}
+
+// Delete group function
+const deleteGroup = (group) => {
+  const groupName = group.title || `Item 5R #${group.id}`
+  const hasPhotos = group.photos && group.photos.length > 0
+
+  let confirmMessage = `Apakah Anda yakin ingin menghapus "${groupName}"?`
+  if (hasPhotos) {
+    confirmMessage += `\n\nPerhatian: Item 5R ini memiliki ${group.photos.length} foto yang akan ikut terhapus.`
+  }
+
+  if (confirm(confirmMessage)) {
+    deleteGroupById(group.id)
+  }
+}
+
+// Update group title API call
+const updateGroupTitle = async (groupId, newTitle) => {
+  try {
+    await api.put(`/api/comparison-groups/${groupId}`, {
+      title: newTitle,
+    })
+
+    // Update local data
+    const groupIndex = comparisonGroups.value.findIndex((g) => g.id === groupId)
+    if (groupIndex !== -1) {
+      comparisonGroups.value[groupIndex].title = newTitle
+    }
+
+    console.log('✅ Group title updated successfully')
+  } catch (error) {
+    console.error('❌ Failed to update group title:', error)
+    alert('Gagal mengubah nama grup. Silakan coba lagi.')
+  }
+}
+
+// Delete group API call
+const deleteGroupById = async (groupId) => {
+  try {
+    await api.delete(`/api/comparison-groups/${groupId}`)
+
+    // Remove from local data
+    comparisonGroups.value = comparisonGroups.value.filter((g) => g.id !== groupId)
+
+    console.log('✅ Group deleted successfully')
+  } catch (error) {
+    console.error('❌ Failed to delete group:', error)
+    alert('Gagal menghapus grup. Silakan coba lagi.')
+  }
+}
+
 const resetFilters = () => {
-  selectedMonth.value = 'all'
-  selectedYear.value = 'all'
+  selectedMonth.value = (new Date().getMonth() + 1).toString()
+  selectedYear.value = new Date().getFullYear().toString()
   selectedStatus.value = 'all'
 }
 
@@ -688,85 +959,11 @@ const getCategoryText = (category) => {
   return categoryMap[category] || category
 }
 
-const viewPhoto = (group, photo, category) => {
-  console.log('🖼️ ViewPhoto called:', { group, photo, category })
-
-  const allPhotos = group.photos || []
-  const orderedCategories = ['BEFORE', 'ACTION', 'AFTER']
-
-  // Create ordered photo array for lightbox navigation
-  const orderedPhotos = []
-  orderedCategories.forEach((cat) => {
-    const foundPhoto = allPhotos.find((p) => p.category === cat)
-    if (foundPhoto) orderedPhotos.push(foundPhoto)
-  })
-
-  console.log('🖼️ Ordered photos:', orderedPhotos)
-  const initialIndex = orderedPhotos.findIndex((p) => p.id === photo.id)
-  console.log('🖼️ Initial index:', initialIndex)
-
-  lightboxPhotos.value = orderedPhotos
-  lightboxInitialIndex.value = Math.max(0, initialIndex)
-  lightboxGroupInfo.value = group
-  showLightbox.value = true
-
-  console.log('🖼️ Lightbox state:', {
-    photos: lightboxPhotos.value.length,
-    initialIndex: lightboxInitialIndex.value,
-    isOpen: showLightbox.value,
-  })
-}
-
 const closeLightbox = () => {
   showLightbox.value = false
   lightboxPhotos.value = []
   lightboxGroupInfo.value = null
   lightboxInitialIndex.value = 0
-}
-
-// Debug functions
-const forceOpenModal = () => {
-  console.log('🟢 Force opening modal...')
-  showAddGroupModal.value = true
-  console.log('🟢 Modal state after force open:', showAddGroupModal.value)
-}
-
-const logModalState = () => {
-  console.log('📊 Current modal state:', {
-    showAddGroupModal: showAddGroupModal.value,
-    openAddGroupModal,
-    closeAddGroupModal,
-  })
-}
-
-const testAreaExists = async () => {
-  try {
-    console.log('🧪 Testing if area exists...')
-    console.log('🧪 AreaId:', areaId.value, typeof areaId.value)
-
-    // First check if areas exist at all
-    console.log('🧪 Getting all areas...')
-    const areasResponse = await api.get('/api/areas')
-    console.log('🧪 All areas:', areasResponse.data)
-
-    // Test direct API call
-    const testUrl = `/api/comparison-groups?areaId=${areaId.value}`
-    console.log('🧪 Test URL:', testUrl)
-
-    const response = await api.get(testUrl)
-    console.log('🧪 Raw API response:', response)
-    console.log('🧪 Response data:', response.data)
-    console.log('🧪 Response data type:', typeof response.data)
-    console.log('🧪 Response data keys:', Object.keys(response.data || {}))
-
-    // Test without areaId filter
-    console.log('🧪 Testing without areaId filter...')
-    const allGroupsResponse = await api.get('/api/comparison-groups')
-    console.log('🧪 All groups (no filter):', allGroupsResponse.data)
-  } catch (error) {
-    console.error('🧪 Area test error:', error)
-    console.error('🧪 Error response:', error.response?.data)
-  }
 }
 
 // Initialize

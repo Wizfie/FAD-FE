@@ -116,7 +116,7 @@
 
 <script setup>
 import BaseButton from './BaseButton.vue'
-import { formatDateTime } from '@/utils/commonUtils.js'
+import { formatDateTime } from '@/utils/helper.js'
 
 defineProps({
   users: { type: Array, default: () => [] },

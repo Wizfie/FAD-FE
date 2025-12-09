@@ -160,18 +160,14 @@
       <div class="toc">
         <h3>📋 Daftar Isi</h3>
         <ul>
-          <li><a href="#login">🔐 Login & Autentikasi</a></li>
+          <li><a href="#login">🔐 Cara Login</a></li>
           <li><a href="#dashboard-role">👥 Dashboard Berdasarkan Role</a></li>
-          <li><a href="#dashboard-fad">🌲 Dashboard FAD</a></li>
+          <li><a href="#dashboard-fad">🌲 Dashboard FAD - Fitur & Cara Penggunaan</a></li>
           <li><a href="#dashboard-tps">🏗️ Dashboard TPS</a></li>
-          <li><a href="#manajemen">📝 Manajemen Data</a></li>
-          <li><a href="#status">📊 Status Tracking</a></li>
-          <li><a href="#upload">📸 Upload Foto</a></li>
-          <li><a href="#admin">⚙️ Admin Panel</a></li>
-          <li><a href="#security-logs">🛡️ Security Logs (Admin)</a></li>
-          <li><a href="#changelog">📋 Change Logs (Admin)</a></li>
-          <li><a href="#testing-guide">🧪 Testing & Development Guide</a></li>
-          <li><a href="#tips">💡 Tips & Troubleshooting</a></li>
+          <li><a href="#manajemen">📝 Cara Mengelola Data</a></li>
+          <li><a href="#upload">📸 Cara Upload Foto</a></li>
+          <li><a href="#admin">⚙️ Admin Panel - Panduan Lengkap</a></li>
+          <li><a href="#tips">💡 Tips Penggunaan</a></li>
         </ul>
       </div>
 
@@ -229,15 +225,71 @@
       <div id="dashboard-fad">
         <h2>🌲 Dashboard FAD</h2>
 
+        <div
+          class="update-box"
+          style="
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+          "
+        >
+          <h3>🆕 Enhanced Kanban Board (Baru!)</h3>
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>📋 Card-Based Layout</h4>
+            <ul>
+              <li><strong>Dynamic Cards</strong>: Setiap status ditampilkan dalam card terpisah</li>
+              <li><strong>Expand/Collapse</strong>: Klik header card untuk membuka/tutup</li>
+              <li>
+                <strong>Fixed Size</strong>: Card expanded memiliki ukuran tetap (320x384px) dengan
+                scroll vertical
+              </li>
+              <li><strong>Compact Mode</strong>: Card collapsed menampilkan ringkasan saja</li>
+            </ul>
+          </div>
+
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>⚠️ Attention Projects</h4>
+            <ul>
+              <li>
+                <strong>Auto Detection</strong>: Sistem otomatis mendeteksi proyek yang perlu
+                perhatian
+              </li>
+              <li><strong>Hold > 3 bulan</strong>: Proyek hold lebih dari 3 bulan</li>
+              <li><strong>Open > 1 bulan</strong>: Proyek open lebih dari 1 bulan</li>
+              <li>
+                <strong>Collapsible Section</strong>: Section attention dapat di-collapse untuk
+                menghemat ruang
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>� Plant Navigation</h4>
+            <ul>
+              <li><strong>Clickable Cards</strong>: Klik plant card untuk navigasi langsung</li>
+              <li>
+                <strong>Status-Specific Filter</strong>: Otomatis filter berdasarkan status yang
+                dipilih
+              </li>
+              <li><strong>Query Parameters</strong>: URL berubah sesuai filter untuk bookmark</li>
+              <li><strong>Back Navigation</strong>: Tombol back untuk kembali ke dashboard</li>
+            </ul>
+          </div>
+        </div>
+
         <h3>Fitur Utama</h3>
 
         <div class="feature-box">
-          <h4>📊 Cards Overview</h4>
+          <h4>📊 Statistics Overview</h4>
           <ul>
-            <li>Total Data</li>
+            <li><strong>Alert Metrics</strong>: Long Hold (>3 bulan), Old Open (>1 bulan)</li>
+            <li><strong>Progress Tracking</strong>: Completion rate dan progress percentage</li>
             <li><span class="status-badge status-open">Open</span> Status terbuka</li>
-            <li><span class="status-badge status-progress">Progress</span> Status dalam proses</li>
-            <li><span class="status-badge status-close">Close</span> Status selesai</li>
+            <li>
+              <span class="status-badge status-progress">OnProgress</span> Status dalam proses
+            </li>
+            <li><span class="status-badge status-close">Closed</span> Status selesai</li>
             <li><span class="status-badge status-hold">Hold</span> Status ditahan</li>
           </ul>
         </div>
@@ -248,15 +300,17 @@
             <li><strong>Add Data</strong>: Tambah data FAD baru</li>
             <li><strong>User Guide</strong>: Buka panduan pengguna</li>
             <li><strong>Import</strong>: Import data dari file</li>
+            <li><strong>Board View Toggle</strong>: Switch antara kanban dan list view</li>
           </ul>
         </div>
 
         <div class="feature-box">
-          <h4>🔍 Filter & Search</h4>
+          <h4>🔍 Enhanced Filtering</h4>
           <ul>
-            <li>Filter berdasarkan Area</li>
-            <li>Filter berdasarkan Status (Open/Progress/Close/Hold)</li>
-            <li>Search berdasarkan No FAD</li>
+            <li><strong>Status Filter</strong>: Filter berdasarkan Open/OnProgress/Hold/Closed</li>
+            <li><strong>Plant Navigation</strong>: Klik plant untuk filter spesifik</li>
+            <li><strong>Search Integration</strong>: Search dengan filter status aktif</li>
+            <li><strong>Attention Filter</strong>: Fokus pada proyek yang memerlukan perhatian</li>
           </ul>
         </div>
 
@@ -370,12 +424,78 @@
       <div id="admin">
         <h2>⚙️ Admin Panel</h2>
 
+        <div
+          class="update-box"
+          style="
+            background: linear-gradient(45deg, #ffecd2 0%, #fcb69f 100%);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+          "
+        >
+          <h3>🆕 Enhanced Table Features (Baru!)</h3>
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>📋 Table Improvements</h4>
+            <ul>
+              <li>
+                <strong>Vertical Scroll</strong>: Table dengan max-height 70vh dan scroll vertical
+              </li>
+              <li>
+                <strong>Custom Scrollbar</strong>: Scrollbar modern dengan hover effects dan dark
+                mode support
+              </li>
+              <li><strong>Back to Top</strong>: Tombol scroll ke atas untuk navigasi mudah</li>
+              <li><strong>Smooth Animation</strong>: Transisi yang halus untuk semua interaksi</li>
+            </ul>
+          </div>
+
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>🔧 Dashboard Switcher Fix</h4>
+            <ul>
+              <li>
+                <strong>Z-Index Management</strong>: Perbaikan hierarchy untuk dropdown visibility
+              </li>
+              <li>
+                <strong>No Overlap</strong>: Dashboard switcher tidak lagi tertimpa table elements
+              </li>
+              <li><strong>Proper Positioning</strong>: Dropdown positioning yang konsisten</li>
+              <li><strong>Mobile Responsive</strong>: Optimasi untuk semua ukuran layar</li>
+            </ul>
+          </div>
+
+          <div class="feature-box" style="background: rgba(255, 255, 255, 0.9); margin: 10px 0">
+            <h4>💡 User Experience</h4>
+            <ul>
+              <li>
+                <strong>Non-Sticky Headers</strong>: Header admin table tidak sticky untuk
+                fleksibilitas
+              </li>
+              <li><strong>Hover Effects</strong>: Visual feedback yang jelas untuk interaksi</li>
+              <li><strong>Loading States</strong>: Indikator loading yang informatif</li>
+              <li><strong>Error Handling</strong>: Pesan error yang lebih user-friendly</li>
+            </ul>
+          </div>
+        </div>
+
         <div class="feature-box">
           <h3>Fitur Admin (Khusus ADMIN Role)</h3>
           <ul>
             <li><strong>User Management</strong>: Tambah, edit, set role user</li>
-            <li><strong>System Management</strong>: Logs, backup, configuration</li>
-            <li><strong>Dashboard Access</strong>: Akses ke semua dashboard</li>
+            <li><strong>Data Management</strong>: CRUD operations untuk semua data FAD</li>
+            <li><strong>System Management</strong>: Security logs, changelog, export data</li>
+            <li><strong>Dashboard Access</strong>: Akses ke semua dashboard melalui switcher</li>
+            <li><strong>Vendor Management</strong>: Kelola data vendor dan relasi</li>
+          </ul>
+        </div>
+
+        <div class="feature-box">
+          <h3>Table Management</h3>
+          <ul>
+            <li><strong>Advanced Search</strong>: Search dengan multiple criteria</li>
+            <li><strong>Pagination</strong>: Navigasi halaman yang efisien</li>
+            <li><strong>Action Buttons</strong>: Edit dan delete dengan konfirmasi</li>
+            <li><strong>Export Functionality</strong>: Export data dengan filter</li>
+            <li><strong>Responsive Design</strong>: Optimal di desktop dan mobile</li>
           </ul>
         </div>
       </div>
@@ -475,47 +595,6 @@ Severity: ERROR
 Details: JWT token expired or invalid
 IP: 192.168.1.80</code></pre>
         </div>
-
-        <h3>File & Configuration Details</h3>
-
-        <div class="update-box">
-          <h4>📁 Backend Files Location</h4>
-          <ul>
-            <li><code>FAD-BE/controllers/logController.js</code> - Log API controller</li>
-            <li><code>FAD-BE/routes/logRoutes.js</code> - Log API routes</li>
-            <li><code>FAD-BE/middlewares/securityLogger.js</code> - Security logging utility</li>
-            <li><code>FAD-BE/middlewares/validation.js</code> - Input validation with logging</li>
-            <li><code>FAD-BE/logs/security.log</code> - Security events log file</li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>🎨 Frontend Files Location</h4>
-          <ul>
-            <li><code>FAD-FE/src/components/SecurityLogs.vue</code> - Security logs interface</li>
-            <li><code>FAD-FE/src/views/Admin.vue</code> - Admin dashboard integration</li>
-          </ul>
-        </div>
-
-        <div class="feature-box">
-          <h4>⚙️ Environment Configuration</h4>
-          <pre><code># Backend (.env file)
-LOG_LEVEL=info                   # Minimum log level
-LOG_RETENTION_DAYS=30           # Days to keep logs
-MAX_LOGIN_ATTEMPTS=5            # Max failed attempts before suspicious
-RATE_LIMIT_WINDOW=15            # Rate limit window in minutes
-RATE_LIMIT_MAX=100              # Max requests per window</code></pre>
-        </div>
-
-        <div class="update-box">
-          <h4>🔄 Log Management</h4>
-          <ul>
-            <li><strong>Log Rotation</strong>: Files dirotasi otomatis setiap hari</li>
-            <li><strong>Auto Cleanup</strong>: Log lama dibersihkan setelah 30 hari</li>
-            <li><strong>File Size Limit</strong>: Maximum 50MB per file</li>
-            <li><strong>Backup</strong>: Regular backup untuk disaster recovery</li>
-          </ul>
-        </div>
       </div>
 
       <div id="changelog">
@@ -589,378 +668,91 @@ RATE_LIMIT_MAX=100              # Max requests per window</code></pre>
             <li>Review perubahan penting secara berkala</li>
           </ul>
         </div>
-
-        <h3>File & API Details</h3>
-
-        <div class="update-box">
-          <h4>📁 Backend Files Location</h4>
-          <ul>
-            <li>
-              <code>FAD-BE/controllers/changeLogController.js</code> - Changelog API controller
-            </li>
-            <li><code>FAD-BE/routes/changelogRoutes.js</code> - Changelog API routes</li>
-            <li><code>FAD-BE/services/serviceFad.js</code> - FAD operations with logging</li>
-            <li>
-              <code>FAD-BE/controllers/userController.js</code> - User operations with logging
-            </li>
-            <li>
-              <code>FAD-BE/controllers/photoController.js</code> - Photo operations with logging
-            </li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>🎨 Frontend Files Location</h4>
-          <ul>
-            <li>
-              <code>FAD-FE/src/components/ChangelogViewer.vue</code> - Main changelog interface
-            </li>
-            <li><code>FAD-FE/src/views/Admin.vue</code> - Admin dashboard integration</li>
-          </ul>
-        </div>
-
-        <div class="feature-box">
-          <h4>🔌 API Endpoints</h4>
-          <ul>
-            <li><code>GET /api/changelog/logs</code> - Retrieve changelog data (Admin only)</li>
-            <li><code>GET /api/changelog/stats</code> - Get changelog statistics (Admin only)</li>
-            <li><code>GET /api/changelog/export</code> - Export changelog to CSV (Admin only)</li>
-          </ul>
-        </div>
-
-        <div class="feature-box">
-          <h4>📊 Data Structure Details</h4>
-          <pre><code>{
-  "id": "unique_id",
-  "model": "FAD|USER|VENDOR|PHOTO|AREA",
-  "action": "CREATE|UPDATE|DELETE|UPLOAD|LOGIN",
-  "data": {
-    // Object containing relevant data for the operation
-  },
-  "userId": "user_who_performed_action",
-  "timestamp": "2025-09-25T10:30:00.000Z"
-}</code></pre>
-        </div>
-
-        <div class="update-box">
-          <h4>🔄 Integration Points</h4>
-          <ul>
-            <li>
-              <strong>FAD Operations</strong>: Automatic logging in saveDataHandler,
-              updateDataHandler, deleteDataHandler
-            </li>
-            <li>
-              <strong>User Management</strong>: Logging in register, login, update, delete user
-              operations
-            </li>
-            <li><strong>Vendor Operations</strong>: Logging in vendor CRUD operations</li>
-            <li>
-              <strong>Photo Management</strong>: Logging in photo upload and delete operations
-            </li>
-            <li><strong>Area Management</strong>: Logging in area CRUD operations</li>
-          </ul>
-        </div>
-      </div>
-
-      <div id="testing-guide">
-        <h2>🧪 Testing & Development Guide</h2>
-
-        <div class="warning-box">
-          <strong>⚠️ Developer Section:</strong> Bagian ini ditujukan untuk developer dan QA team
-          untuk testing sistem changelog dan security logging.
-        </div>
-
-        <h3>Backend Testing</h3>
-
-        <div class="feature-box">
-          <h4>🚀 Start Backend Server</h4>
-          <pre><code>cd FAD-BE
-npm start</code></pre>
-          <p>Server harus berjalan tanpa error di <code>http://localhost:5001</code></p>
-        </div>
-
-        <div class="feature-box">
-          <h4>📡 Test API Endpoints (Postman/curl)</h4>
-
-          <p><strong>Get Changelog Logs:</strong></p>
-          <pre><code>GET /api/changelog/logs
-Headers: Authorization: Bearer &lt;admin_token&gt;</code></pre>
-
-          <p><strong>Get Changelog Stats:</strong></p>
-          <pre><code>GET /api/changelog/stats
-Headers: Authorization: Bearer &lt;admin_token&gt;</code></pre>
-
-          <p><strong>Export Changelog:</strong></p>
-          <pre><code>GET /api/changelog/export
-Headers: Authorization: Bearer &lt;admin_token&gt;</code></pre>
-
-          <p><strong>Get Security Logs:</strong></p>
-          <pre><code>GET /api/logs/security
-Headers: Authorization: Bearer &lt;admin_token&gt;</code></pre>
-        </div>
-
-        <h3>Frontend Testing</h3>
-
-        <div class="feature-box">
-          <h4>🎨 Start Frontend Server</h4>
-          <pre><code>cd FAD-FE
-npm run dev</code></pre>
-        </div>
-
-        <div class="feature-box">
-          <h4>🔍 Access Testing Interface</h4>
-          <ol>
-            <li><strong>Login sebagai ADMIN</strong></li>
-            <li><strong>Navigate ke Admin Dashboard (FAD)</strong></li>
-            <li><strong>Click Main Menu (≡) → Change Logs/Security Logs</strong></li>
-            <li><strong>Modal viewer akan terbuka</strong></li>
-          </ol>
-        </div>
-
-        <h3>End-to-End Testing Scenarios</h3>
-
-        <div class="update-box">
-          <h4>📊 Scenario 1: Generate Test Changelog Data</h4>
-          <ul>
-            <li><strong>Create FAD Entry</strong> → Should log "FAD CREATE"</li>
-            <li><strong>Update FAD Entry</strong> → Should log "FAD UPDATE"</li>
-            <li><strong>Delete FAD Entry</strong> → Should log "FAD DELETE"</li>
-            <li><strong>Upload Photo</strong> → Should log "PHOTO UPLOAD"</li>
-            <li><strong>Delete Photo</strong> → Should log "PHOTO DELETE"</li>
-            <li><strong>Update User</strong> → Should log "USER UPDATE"</li>
-            <li><strong>Login/Register</strong> → Should log "USER LOGIN/REGISTER"</li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>🔐 Scenario 2: Generate Security Log Data</h4>
-          <ul>
-            <li><strong>Failed Login</strong> → Should log "LOGIN_FAILURE"</li>
-            <li><strong>Access Denied</strong> → Should log "UNAUTHORIZED_ACCESS"</li>
-            <li><strong>Multiple Failed Attempts</strong> → Should log "SUSPICIOUS_ACTIVITY"</li>
-            <li><strong>Invalid Token</strong> → Should log "TOKEN_ERROR"</li>
-            <li><strong>Invalid Input</strong> → Should log "VALIDATION_ERROR"</li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>📱 Scenario 3: Test Viewer Interface</h4>
-          <ol>
-            <li><strong>Open Change Logs/Security Logs dari Admin Menu</strong></li>
-            <li><strong>Verify Statistics Dashboard shows correct counts</strong></li>
-            <li>
-              <strong>Test Filtering:</strong>
-              <ul>
-                <li>Filter by Model/Event Type (FAD, USER, PHOTO, etc)</li>
-                <li>Filter by Action/Severity (CREATE, UPDATE, DELETE, etc)</li>
-                <li>Search functionality</li>
-                <li>Date range filtering</li>
-              </ul>
-            </li>
-            <li><strong>Test Pagination</strong> (jika ada banyak entries)</li>
-            <li><strong>Test Detail View</strong> (click "View Details")</li>
-            <li><strong>Test Export CSV</strong> functionality</li>
-          </ol>
-        </div>
-
-        <h3>Expected Data Structures</h3>
-
-        <div class="feature-box">
-          <h4>📋 FAD Operations</h4>
-          <pre><code>{
-  "model": "FAD",
-  "action": "CREATE|UPDATE|DELETE",
-  "data": {
-    "noFad": "FAD001",
-    "item": "Item Name",
-    "vendor": "Vendor Name",
-    "status": "Status"
-  }
-}</code></pre>
-        </div>
-
-        <div class="feature-box">
-          <h4>📸 Photo Operations</h4>
-          <pre><code>{
-  "model": "PHOTO",
-  "action": "UPLOAD|DELETE",
-  "data": {
-    "count": 3,
-    "areaId": 123,
-    "files": [{"filename": "img.jpg", "originalname": "photo.jpg"}]
-  }
-}</code></pre>
-        </div>
-
-        <div class="feature-box">
-          <h4>👤 User Operations</h4>
-          <pre><code>{
-  "model": "USER",
-  "action": "UPDATE|DELETE|LOGIN|REGISTER",
-  "data": {
-    "id": "user_id",
-    "username": "username",
-    "email": "email@example.com",
-    "role": "ADMIN|INTERNAL|EXTERNAL"
-  }
-}</code></pre>
-        </div>
-
-        <div class="feature-box">
-          <h4>🔒 Security Events</h4>
-          <pre><code>{
-  "eventType": "LOGIN_FAILURE|UNAUTHORIZED_ACCESS|SUSPICIOUS_ACTIVITY",
-  "severity": "INFO|WARN|ERROR|CRITICAL",
-  "details": "Event description",
-  "ipAddress": "192.168.1.100",
-  "userAgent": "Browser info"
-}</code></pre>
-        </div>
-
-        <h3>Validation Checklist</h3>
-
-        <div class="update-box">
-          <h4>✅ Backend Validation</h4>
-          <ul>
-            <li>Server starts without errors</li>
-            <li>All changelog API endpoints accessible</li>
-            <li>All security log API endpoints accessible</li>
-            <li>Auth middleware working (Admin only access)</li>
-            <li>Database changelog entries created correctly</li>
-            <li>Database security log entries created correctly</li>
-            <li>CSV export generates valid file</li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>✅ Frontend Validation</h4>
-          <ul>
-            <li>ChangelogViewer component renders correctly</li>
-            <li>SecurityLogs component renders correctly</li>
-            <li>Statistics dashboard shows accurate data</li>
-            <li>All filtering options work properly</li>
-            <li>Pagination functions correctly</li>
-            <li>Modal opens/closes properly</li>
-            <li>Responsive design works on mobile</li>
-            <li>Loading states display correctly</li>
-            <li>Error handling works</li>
-          </ul>
-        </div>
-
-        <div class="update-box">
-          <h4>✅ Integration Validation</h4>
-          <ul>
-            <li>FAD operations log correctly</li>
-            <li>User operations log correctly</li>
-            <li>Photo operations log correctly</li>
-            <li>Vendor operations log correctly</li>
-            <li>Login/register activities log correctly</li>
-            <li>Security events trigger proper logging</li>
-            <li>All logged data contains proper structure</li>
-          </ul>
-        </div>
-
-        <h3>Performance & Load Testing</h3>
-
-        <div class="feature-box">
-          <h4>📊 Volume Testing</h4>
-          <ul>
-            <li>Create 100+ changelog entries</li>
-            <li>Create 100+ security log entries</li>
-            <li>Test pagination performance</li>
-            <li>Test filtering with large datasets</li>
-            <li>Test export with large data volume</li>
-          </ul>
-        </div>
-
-        <div class="feature-box">
-          <h4>⚡ Load Testing</h4>
-          <ul>
-            <li>Multiple concurrent users accessing logs</li>
-            <li>Simultaneous CRUD operations generating logs</li>
-            <li>CSV export under load</li>
-            <li>Real-time log updates performance</li>
-          </ul>
-        </div>
-
-        <h3>Success Criteria</h3>
-
-        <div class="warning-box">
-          <h4>🎯 System considered successful if:</h4>
-          <ol>
-            <li>All API endpoints accessible dengan proper authentication</li>
-            <li>Changelog dan Security logs viewer interface fully functional</li>
-            <li>All CRUD operations generate proper changelog entries</li>
-            <li>All security events generate proper log entries</li>
-            <li>Filtering, search, dan pagination work correctly</li>
-            <li>CSV export generates valid data</li>
-            <li>Permission-based access control working</li>
-            <li>No console errors di browser atau server</li>
-            <li>Responsive design works on desktop dan mobile</li>
-          </ol>
-        </div>
-
-        <div class="update-box">
-          <h4>🚀 Quick Test Command</h4>
-          <p>
-            <strong
-              >Login as ADMIN → Admin Dashboard → Main Menu → Change Logs/Security Logs</strong
-            >
-          </p>
-          <p>Sistem siap untuk comprehensive testing jika semua checklist di atas terpenuhi!</p>
-        </div>
       </div>
 
       <div id="tips">
         <h2>💡 Tips & Troubleshooting</h2>
 
         <div class="update-box">
-          <h3>✅ Update Log Terbaru (September 2025)</h3>
+          <h3>🆕 Update Log Terbaru (Oktober 2025)</h3>
           <ul>
-            <li>🆕 <strong>Security Logs</strong>: Monitoring keamanan untuk ADMIN</li>
-            <li>🆕 <strong>Change Logs</strong>: Riwayat perubahan data untuk ADMIN</li>
+            <li>
+              🆕 <strong>Enhanced Kanban Board</strong>: Card-based layout dengan expand/collapse
+              individual
+            </li>
+            <li>
+              🆕 <strong>Attention Projects</strong>: Auto-detection proyek yang perlu perhatian
+            </li>
+            <li>🆕 <strong>Plant Navigation</strong>: Klik plant card untuk filter direct</li>
+            <li>🆕 <strong>Table Vertical Scroll</strong>: Max-height dengan custom scrollbar</li>
+            <li>
+              🆕 <strong>Dashboard Switcher Fix</strong>: Mengatasi overlap dengan table elements
+            </li>
+            <li>
+              🆕 <strong>Z-Index Management</strong>: Proper layering untuk semua UI components
+            </li>
+            <li>✅ <strong>Security Logs</strong>: Monitoring keamanan untuk ADMIN</li>
+            <li>✅ <strong>Change Logs</strong>: Riwayat perubahan data untuk ADMIN</li>
             <li>✅ <strong>Dashboard Selector</strong>: User INTERNAL dapat memilih dashboard</li>
             <li>✅ <strong>Dashboard Switcher</strong>: Navigasi antar dashboard</li>
-            <li>✅ <strong>Hold Status Page</strong>: Halaman khusus untuk data Hold</li>
             <li>
               ✅ <strong>Role-based Redirect</strong>: Auto redirect sesuai role setelah login
             </li>
-            <li>✅ <strong>Date Field Fix</strong>: Tanggal otomatis terisi saat edit data</li>
-            <li>✅ <strong>User Guide Local</strong>: Guide sekarang tersedia offline</li>
           </ul>
         </div>
 
         <h3>Tips Penggunaan</h3>
         <ul>
-          <li><strong>Tanggal</strong>: Selalu isi tanggal dengan format DD/MM/YYYY</li>
-          <li><strong>Status</strong>: Gunakan status Hold untuk data yang bermasalah</li>
           <li>
-            <strong>Navigation</strong>: User INTERNAL dapat berpindah dashboard dengan switcher
+            <strong>Kanban Board</strong>: Klik header card untuk expand/collapse, klik plant card
+            untuk navigasi
           </li>
+          <li>
+            <strong>Attention Projects</strong>: Gunakan section ini untuk monitoring proyek kritis
+          </li>
+          <li><strong>Table Scroll</strong>: Gunakan scroll vertical untuk navigasi data banyak</li>
+          <li>
+            <strong>Dashboard Switcher</strong>: Tersedia di pojok kanan atas untuk INTERNAL/ADMIN
+          </li>
+          <li>
+            <strong>Status Filter</strong>: Kombinasikan dengan plant navigation untuk filter
+            spesifik
+          </li>
+          <li><strong>Tanggal</strong>: Selalu isi tanggal dengan format DD/MM/YYYY</li>
           <li><strong>Search</strong>: Gunakan No FAD untuk pencarian cepat</li>
         </ul>
 
         <h3>Troubleshooting</h3>
         <ul>
+          <li>
+            <strong>Kanban Card Tidak Expand</strong>: Klik tepat pada header card, bukan area lain
+          </li>
+          <li>
+            <strong>Plant Navigation Tidak Berfungsi</strong>: Pastikan klik pada area card plant,
+            bukan header
+          </li>
+          <li>
+            <strong>Dashboard Switcher Tidak Muncul</strong>: Pastikan role INTERNAL atau ADMIN
+          </li>
+          <li>
+            <strong>Dashboard Switcher Tertutup Table</strong>: Issue telah diperbaiki, refresh
+            halaman
+          </li>
+          <li><strong>Table Terlalu Tinggi</strong>: Table dibatasi 70vh dengan vertical scroll</li>
+          <li>
+            <strong>Scrollbar Tidak Muncul</strong>: Browser mungkin tidak support custom scrollbar
+          </li>
+          <li>
+            <strong>Back to Top Tidak Berfungsi</strong>: Pastikan JavaScript enabled di browser
+          </li>
           <li><strong>Login Gagal</strong>: Periksa username/password, atau hubungi admin</li>
           <li><strong>Data Tidak Muncul</strong>: Periksa filter yang aktif</li>
           <li><strong>Upload Gagal</strong>: Periksa ukuran file dan format</li>
           <li><strong>Tanggal Tidak Tersimpan</strong>: Pastikan format tanggal benar</li>
-          <li><strong>Dashboard Tidak Muncul</strong>: Periksa role user Anda</li>
           <li>
             <strong>Menu Security/Change Logs Tidak Muncul</strong>: Pastikan login sebagai ADMIN
           </li>
-          <li>
-            <strong>Security Logs Kosong</strong>: Generate aktivitas terlebih dahulu (login/logout)
-          </li>
-          <li>
-            <strong>Change Logs Tidak Terupdate</strong>: Refresh halaman atau lakukan operasi CRUD
-          </li>
           <li><strong>Export Gagal</strong>: Pastikan browser mengizinkan download file</li>
-          <li>
-            <strong>Filter Tidak Berfungsi</strong>: Klik tombol "Apply Filters" setelah mengubah
-            kriteria
-          </li>
         </ul>
 
         <h3>Keyboard Shortcuts</h3>
@@ -972,14 +764,51 @@ npm run dev</code></pre>
       </div>
 
       <div class="footer">
-        <p>📅 <strong>Terakhir diupdate:</strong> September 25, 2025</p>
+        <p>📅 <strong>Terakhir diupdate:</strong> Oktober 1, 2025</p>
         <p>🏢 <strong>Aplikasi FAD</strong> - Fixed Asset Disposal Management System</p>
         <p>
           📦 <strong>TPS</strong> - Tempat Penyimpanan Sementara untuk aset yang akan di-disposal
         </p>
         <p>
-          🔧 <strong>Version:</strong> Complete with Security Logs, Change Logs, and Testing Guide
+          🔧 <strong>Version:</strong> Enhanced with Kanban Board, Table Improvements, and UI/UX
+          Updates
         </p>
+        <p
+          style="
+            margin-top: 15px;
+            padding: 10px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 8px;
+          "
+        >
+          🆕 <strong>Latest Features:</strong> Card-based Kanban | Attention Projects | Enhanced
+          Tables | Dashboard Switcher Fix
+        </p>
+        <div
+          style="
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            color: white;
+            border-radius: 10px;
+            text-align: center;
+          "
+        >
+          <p style="margin: 5px 0; font-size: 16px; font-weight: bold">
+            👨‍💻 <strong>Developed & Enhanced by:</strong>
+          </p>
+          <p
+            style="
+              margin: 10px 0;
+              font-size: 18px;
+              font-weight: bold;
+              text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            "
+          >
+            🌟 Wisfie Syahbani 🌟
+          </p>
+        </div>
       </div>
     </div>
   </body>
