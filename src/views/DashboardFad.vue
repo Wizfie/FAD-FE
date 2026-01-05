@@ -17,8 +17,8 @@
 
         <!-- Desktop: panel admin on the far right -->
         <div class="hidden sm:flex ml-auto items-center gap-2 relative">
-          <!-- Dashboard Switcher for INTERNAL role -->
-          <DashboardSwitcher v-if="authStore.isInternal || authStore.isAdmin" />
+          <!-- Dashboard Switcher -->
+          <DashboardSwitcher />
           <!-- Logout Button -->
           <BaseButton
             variant="danger"
@@ -54,10 +54,17 @@
       <!-- row 2: actions (mobile only) -->
       <div
         class="mt-3 gap-2 sm:hidden"
-        :class="authStore.user?.role === 'INTERNAL' ? 'grid grid-cols-3' : 'grid grid-cols-2'"
+        :class="
+          authStore.accessibleModules.length > 1 || authStore.isSuperAdmin
+            ? 'grid grid-cols-3'
+            : 'grid grid-cols-2'
+        "
       >
-        <!-- Dashboard Switcher for INTERNAL role (Mobile) -->
-        <div v-if="authStore.user?.role === 'INTERNAL'" class="col-span-1">
+        <!-- Dashboard Switcher (Mobile) -->
+        <div
+          v-if="authStore.accessibleModules.length > 1 || authStore.isSuperAdmin"
+          class="col-span-1"
+        >
           <DashboardSwitcher />
         </div>
 
@@ -803,6 +810,8 @@ import { fmtDateToDDMMYYYY, parseDate } from '@/utils/helper.js'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/stores/axios.js'
 import LastUpdate from '@/components/LastUpdate.vue'
+import { useToast } from '@/composables/useToast'
+import { getErrorMessage, getErrorStatusCode } from '@/utils/errorHandler'
 
 // List proyek yang perlu perhatian (Open >1 bulan atau Hold >3 bulan)
 const attentionProjects = computed(() => {
@@ -825,6 +834,7 @@ const attentionProjects = computed(() => {
 const authStore = useAuthStore()
 const router = useRouter()
 const dataFad = ref([])
+const { error: errorMsg } = useToast()
 
 // Logout state
 const isLoggingOut = ref(false)
@@ -863,13 +873,55 @@ function normalizeStatus(raw) {
 const getData = async () => {
   try {
     const statuses = ['open', 'hold', 'onprogress', 'closed']
+    console.log('🔍 [DashboardFad] Requesting statuses:', statuses)
+
     const requests = statuses.map((s) =>
       api.get('/api/v1/get-fad', { params: { q: '', page: 1, limit: 1000, status: s } }),
     )
+
     const responses = await Promise.all(requests)
-    const allRows = responses.flatMap((res) =>
-      res.data && Array.isArray(res.data.data) ? res.data.data : [],
-    )
+    console.log('🔍 [DashboardFad] Responses received:', {
+      count: responses.length,
+      statuses: responses.map((r, i) => ({
+        status: statuses[i],
+        statusCode: r.status,
+        dataCount: r.data?.data?.length || 0,
+      })),
+    })
+
+    // DETAILED DEBUG: Log actual response structure
+    if (responses.length > 0) {
+      const firstRes = responses[0]
+      console.log('🔍 [DashboardFad] First response structure:')
+      console.log('  - res.status:', firstRes.status)
+      console.log('  - res.data type:', typeof firstRes.data)
+      console.log('  - res.data keys:', Object.keys(firstRes.data || {}))
+      console.log('  - res.data.success:', firstRes.data?.success)
+      console.log('  - res.data.data type:', typeof firstRes.data?.data)
+      console.log('  - res.data.data is Array?', Array.isArray(firstRes.data?.data))
+      console.log('  - res.data.data length:', firstRes.data?.data?.length)
+      console.log('  - res.data.data first item:', firstRes.data?.data?.[0])
+    }
+
+    const allRows = responses.flatMap((res) => {
+      // Handle both { data: [...] } and { success: true, data: { data: [...] } }
+      const dataArray = res.data?.data.data
+      if (Array.isArray(dataArray)) {
+        return dataArray
+      }
+      // Fallback if structure is different
+      console.warn('⚠️ [DashboardFad] Unexpected response structure:', res.data)
+      return []
+    })
+
+    console.log('🔍 [DashboardFad] Total rows fetched:', allRows.length)
+    console.log('🔍 [DashboardFad] Rows by status:')
+    const rowsByStatus = {}
+    allRows.forEach((row) => {
+      const status = row.status || 'unknown'
+      rowsByStatus[status] = (rowsByStatus[status] || 0) + 1
+    })
+    console.log(rowsByStatus)
 
     dataFad.value = allRows.map((item) => ({
       noFad: item.noFad ?? '',
@@ -885,10 +937,55 @@ const getData = async () => {
       createdAt: item.createdAt ?? null,
       id: item.id,
     }))
+
+    // VERIFY DATA WAS SET CORRECTLY
+    console.log('✅ [DashboardFad] dataFad.value after assignment:')
+    console.log('  - Length:', dataFad.value.length)
+    console.log('  - Is Array?', Array.isArray(dataFad.value))
+    console.log('  - First item:', dataFad.value[0])
+    console.log('  - Status values:', [...new Set(dataFad.value.map((d) => d.status))])
+
+    console.log('✅ [DashboardFad] Computed properties:')
+    console.log('  - filteredData length:', filteredData.value?.length)
+    console.log('  - totalProjects:', totalProjects.value)
+    console.log('  - completionRate:', completionRate.value)
   } catch (error) {
-    console.error('Gagal mengambil data dashboard:', error)
-    console.error('User role:', authStore.user?.role)
-    console.error('User details:', authStore.user)
+    console.error('❌ [DashboardFad] Failed to fetch FAD data:', error)
+    console.error('❌ [DashboardFad] Error Stack:', error.stack)
+    console.error('❌ [DashboardFad] Error status:', getErrorStatusCode(error))
+    console.error('❌ [DashboardFad] Error message:', getErrorMessage(error))
+    console.error('❌ [DashboardFad] Error code:', error.response?.data?.code)
+    console.error('❌ [DashboardFad] Full error response:', error.response?.data)
+    console.error('❌ [DashboardFad] User role:', authStore.user?.role)
+    console.error('❌ [DashboardFad] User modules:', authStore.user?.modules)
+    console.error('❌ [DashboardFad] User details:', authStore.user)
+    console.error('❌ [DashboardFad] API baseURL:', api.defaults.baseURL)
+    console.error(
+      '❌ [DashboardFad] Request URL would be:',
+      `${api.defaults.baseURL}/api/v1/get-fad`,
+    )
+
+    const errorMessage = getErrorMessage(error)
+    const statusCode = getErrorStatusCode(error)
+
+    // Tampilkan error message yang user-friendly
+    if (statusCode === 403) {
+      errorMsg(
+        '⛔ Akses ditolak: Anda tidak memiliki permission untuk melihat data FAD. Pastikan user memiliki module FAD.',
+      )
+    } else if (statusCode === 401) {
+      errorMsg('🔐 Sesi login telah berakhir, silakan login kembali')
+    } else if (statusCode === 404) {
+      errorMsg('🔍 Endpoint tidak ditemukan. Pastikan backend server berjalan di port 5001')
+    } else if (!statusCode) {
+      errorMsg(
+        '🌐 Koneksi error. Pastikan backend server berjalan dan dapat diakses dari ' +
+          api.defaults.baseURL,
+      )
+    } else {
+      errorMsg(`❌ Gagal mengambil data (${statusCode}): ${errorMessage}`)
+    }
+
     // Set empty array agar UI tidak break
     dataFad.value = []
   }

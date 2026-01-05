@@ -35,20 +35,20 @@ const router = createRouter({
     {
       path: '/all',
       name: 'homeView',
-      component: () => import('@/views/ViewAll.vue'),
+      component: () => import('@/views/ViewAllFad.vue'),
       meta: { requiresAuth: true },
     },
     {
       path: '/myadmin',
       name: 'admin',
-      component: () => import('@/views/Admin.vue'),
-      meta: { requiresAuth: true, role: 'ADMIN' },
+      component: () => import('@/views/AdminFad.vue'),
+      meta: { requiresAuth: true, module: 'FAD', requiresAdmin: true },
     },
     {
       path: '/audit-logs',
       name: 'audit-logs',
       component: () => import('@/views/AuditLog.vue'),
-      meta: { requiresAuth: true, role: 'ADMIN' },
+      meta: { requiresAuth: true, requiresSuperAdmin: true },
     },
     {
       path: '/open',
@@ -77,38 +77,44 @@ const router = createRouter({
     {
       path: '/vendor',
       name: 'vendor',
-      component: () => import('@/views/Vendor.vue'),
-      meta: { requiresAuth: true, role: 'ADMIN' },
+      component: () => import('@/views/VendorFad.vue'),
+      meta: { requiresAuth: true, module: 'FAD', requiresAdmin: true },
+    },
+    {
+      path: '/super-admin',
+      name: 'super-admin',
+      component: () => import('@/views/DashboardSuperAdmin.vue'),
+      meta: { requiresAuth: true, requiresSuperAdmin: true },
     },
     {
       path: '/users',
       name: 'users',
       component: () => import('@/views/userManagement.vue'),
-      meta: { requiresAuth: true },
+      meta: { requiresAuth: true, requiresSuperAdmin: true },
     },
     {
       path: '/tps',
       name: 'dashboard-tps',
       component: () => import('@/views/DashboardTps.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+      meta: { requiresAuth: true, module: 'TPS' },
     },
     {
       path: '/tps/area/:id',
       name: 'area-detail',
-      component: () => import('@/views/AreaDetail.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+      component: () => import('@/views/AreaDetailTps.vue'),
+      meta: { requiresAuth: true, module: 'TPS' },
     },
     {
       path: '/tps/area/:areaId/groups/:groupId',
       name: 'group-detail',
-      component: () => import('@/views/GroupDetail.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+      component: () => import('@/views/GroupDetailTps.vue'),
+      meta: { requiresAuth: true, module: 'TPS' },
     },
     {
       path: '/program-5r',
       name: 'program-info',
-      component: () => import('@/views/ProgramInfo.vue'),
-      meta: { requiresAuth: true, allowedRoles: ['ADMIN', 'INTERNAL'] },
+      component: () => import('@/views/ProgramInfoTps.vue'),
+      meta: { requiresAuth: true, module: 'TPS' },
     },
   ],
 })
@@ -118,33 +124,53 @@ router.beforeEach(async (to, from, next) => {
 
   // Jika route membutuhkan authentication
   if (to.meta.requiresAuth && !authStore.isLoggedIn) {
-    return next({ name: 'login' }) // Redirect ke login jika belum login
+    return next({ name: 'login' })
+  }
+
+  // Module access check
+  if (to.meta.module && !authStore.hasModule(to.meta.module)) {
+    return next({ name: 'dashboard' })
+  }
+
+  // Admin check
+  if (to.meta.requiresAdmin && !authStore.isAdmin) {
+    return next({ name: 'dashboard' })
+  }
+
+  // Super Admin check
+  if (to.meta.requiresSuperAdmin && !authStore.isSuperAdmin) {
+    return next({ name: 'dashboard' })
   }
 
   // Handle dashboard redirect logic berdasarkan user role
   if (to.name === 'dashboard' && authStore.isLoggedIn) {
-    const userRole = authStore.user?.role
+    const modules = authStore.accessibleModules
 
-    if (userRole === 'ADMIN') {
-      // Admin langsung ke admin panel
-      return next({ name: 'admin' })
-    } else if (userRole === 'EXTERNAL') {
-      // External hanya bisa akses FAD
-      return next({ name: 'dashboard-fad' })
-    } else if (userRole === 'INTERNAL') {
-      // Internal bisa pilih FAD atau TPS
-      return next({ name: 'dashboard-select' })
+    if (authStore.isSuperAdmin) {
+      return next({ name: 'super-admin' })
     }
-  }
 
-  // Cek jika route memiliki specific role requirement
-  if (to.meta.role && to.meta.role !== authStore.user.role) {
-    return next({ name: 'dashboard' }) // Redirect ke dashboard jika user tidak punya required role
-  }
+    // Check if user has no modules
+    if (modules.length === 0) {
+      authStore.logout({ server: false, alert: true })
+      return next({ name: 'login' })
+    }
 
-  // Cek jika route memiliki allowed roles requirement
-  if (to.meta.allowedRoles && !to.meta.allowedRoles.includes(authStore.user.role)) {
-    return next({ name: 'dashboard' }) // Redirect ke dashboard jika user tidak punya required role
+    // Single module - redirect based on role and module
+    if (modules.length === 1) {
+      const module = modules[0]
+
+      // For ADMIN: redirect to admin panel
+      if (authStore.isAdmin) {
+        return next({ name: module === 'FAD' ? 'admin' : 'dashboard-tps' })
+      }
+
+      // For USER: redirect to view-only dashboard
+      return next({ name: module === 'FAD' ? 'dashboard-fad' : 'dashboard-tps' })
+    }
+
+    // Multiple modules - show selector
+    return next({ name: 'dashboard-select' })
   }
 
   next()

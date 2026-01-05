@@ -44,7 +44,7 @@
             />
           </svg>
         </template>
-        User
+        Add User
       </BaseButton>
     </div>
   </div>

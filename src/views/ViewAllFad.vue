@@ -83,9 +83,12 @@ const totalItems = ref(0)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / itemsPerPage)))
 
 // Data terfilter dari server (backend handle search + pagination)
-const filteredData = computed(() =>
-  dataFad.value.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)),
-)
+const filteredData = computed(() => {
+  const sorted = dataFad.value.sort(
+    (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0),
+  )
+  return sorted
+})
 
 // debounce timer untuk search
 let searchTimer = null
@@ -102,9 +105,7 @@ const headers = [
   'No FAD',
   'Item',
   'Plant',
-  'Terima FAD',
-  'Terima BBM',
-  'Tanggal Serah Terima',
+  'Tanggal Penerimaan & Pengangkutan',
   'Vendor',
   'Status',
   'Deskripsi',
@@ -136,10 +137,12 @@ const prevPage = () => {
 // Ambil Data (server-side search + pagination)
 const getData = async (page = currentPage.value) => {
   try {
+    console.log('🔍 [ViewAllFad] Fetching data... Page:', page)
     const params = { q: searchQuery.value ?? '', page, limit: itemsPerPage }
     const response = await api.get('/api/v1/get-fad', { params })
+
     if (response.status === 200 && response.data) {
-      const payload = response.data
+      const payload = response.data.data
       const rows = Array.isArray(payload.data) ? payload.data : []
 
       dataFad.value = rows.map((item) => ({
@@ -149,6 +152,7 @@ const getData = async (page = currentPage.value) => {
         terimaFad: item.terimaFad ?? '',
         terimaBbm: item.terimaBbm ?? '',
         bast: item.bast ?? '',
+        tglAngkut: item.tglAngkut ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
@@ -161,7 +165,7 @@ const getData = async (page = currentPage.value) => {
       currentPage.value = payload.meta?.page ?? Number(page)
     }
   } catch (error) {
-    console.error('Terjadi kesalahan saat mengambil data:', error)
+    console.error('❌ [ViewAllFad] Error fetching data:', error)
   }
 }
 
@@ -170,5 +174,3 @@ onMounted(() => {
   getData(1)
 })
 </script>
-
-<!-- Custom transform classes replaced with Tailwind: transform transition-transform duration-300 ease-in-out translate-x-0 translate-x-full -->

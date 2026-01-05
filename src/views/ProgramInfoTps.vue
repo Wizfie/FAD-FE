@@ -22,7 +22,7 @@
               </button>
 
               <div>
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Program 5R</h1>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Program TPS</h1>
                 <!-- <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   {{ images.length }} {{ images.length === 1 ? 'gambar' : 'gambar' }}
                 </p> -->
@@ -153,7 +153,7 @@
               @touchend="handleTouchEnd"
             >
               <img
-                :src="currentImage?.url"
+                :src="getImageUrl(currentImage?.url)"
                 :alt="currentImage?.title || currentImage?.originalName"
                 class="max-w-full max-h-full object-contain transition-all duration-300 select-none pointer-events-none"
                 :style="{
@@ -332,53 +332,91 @@
           <div
             class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4"
           >
-            <button
-              v-for="(image, index) in images"
-              :key="image.id"
-              @click="selectImage(index)"
-              class="group relative aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border-2 transition-all duration-300 hover:shadow-md"
-              :class="{
-                'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800':
-                  index === currentImageIndex,
-                'border-transparent hover:border-gray-300 dark:hover:border-gray-500':
-                  index !== currentImageIndex,
-              }"
-            >
-              <img
-                :src="image.thumbUrl || image.url"
-                :alt="image.title || image.originalName"
-                class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                @error="handleImageError"
-              />
-
-              <!-- Overlay -->
-              <div
-                class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"
-              ></div>
-
-              <!-- Current indicator -->
-              <div
-                v-if="index === currentImageIndex"
-                class="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 shadow-lg"
+            <div v-for="(image, index) in images" :key="image.id" class="relative group">
+              <button
+                @click="selectImage(index)"
+                class="relative w-full aspect-square bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden border-2 transition-all duration-300 hover:shadow-md"
+                :class="{
+                  'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800':
+                    index === currentImageIndex,
+                  'border-transparent hover:border-gray-300 dark:hover:border-gray-500':
+                    index !== currentImageIndex,
+                }"
               >
-                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-              </div>
+                <img
+                  :src="getImageUrl(image.thumbUrl || image.url)"
+                  :alt="image.title || image.originalName"
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  @error="handleImageError"
+                />
 
-              <!-- Image title on hover -->
-              <div
-                class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-              >
-                <p class="text-white text-xs truncate">
-                  {{ image.title || image.originalName }}
-                </p>
-              </div>
-            </button>
+                <!-- Overlay -->
+                <div
+                  class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 pointer-events-none"
+                ></div>
+
+                <!-- Current indicator -->
+                <div
+                  v-if="index === currentImageIndex"
+                  class="absolute top-2 right-2 bg-blue-500 text-white rounded-full p-1 shadow-lg z-10"
+                >
+                  <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fill-rule="evenodd"
+                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </div>
+
+                <!-- Reorder Buttons (Admin Only) - Inside thumbnail, centered -->
+                <div
+                  v-if="canManage"
+                  class="absolute top-1/2 left-0 right-0 -translate-y-1/2 flex justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10"
+                  @click.stop
+                >
+                  <button
+                    @click.stop="moveImage(index, 'left')"
+                    :disabled="index === 0"
+                    class="bg-white/90 hover:bg-white text-gray-800 p-1.5 rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm"
+                    title="Pindah ke kiri"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    @click.stop="moveImage(index, 'right')"
+                    :disabled="index === images.length - 1"
+                    class="bg-white/90 hover:bg-white text-gray-800 p-1.5 rounded-full shadow-lg transition-all disabled:opacity-30 disabled:cursor-not-allowed backdrop-blur-sm"
+                    title="Pindah ke kanan"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2.5"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                <!-- Image title on hover -->
+                <div
+                  class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                >
+                  <p class="text-white text-xs truncate">
+                    {{ image.title || image.originalName }}
+                  </p>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -443,6 +481,16 @@ import api from '@/stores/axios'
 const authStore = useAuthStore()
 const router = useRouter()
 
+// API base URL for images
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL_IP || 'http://localhost:5001'
+
+// Helper function to get full image URL
+const getImageUrl = (path) => {
+  if (!path) return ''
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${API_BASE_URL}${path.startsWith('/') ? path : '/' + path}`
+}
+
 // Reactive data
 const images = ref([])
 const loading = ref(false)
@@ -461,7 +509,7 @@ const imagePosition = ref({ x: 0, y: 0 })
 
 // Computed
 const canManage = computed(() => {
-  return authStore.user?.role === 'ADMIN'
+  return authStore.canEdit('TPS')
 })
 
 const currentImage = computed(() => {
@@ -478,6 +526,9 @@ const loadImages = async () => {
 
     if (response.data.success) {
       images.value = response.data.data
+      console.log('📸 Program Info Images:', images.value)
+      console.log('📸 Sample Image URL:', images.value[0]?.url)
+      console.log('📸 Sample Thumb URL:', images.value[0]?.thumbUrl)
       // Reset index if out of bounds
       if (currentImageIndex.value >= images.value.length) {
         currentImageIndex.value = 0
@@ -664,7 +715,47 @@ const handleDelete = async () => {
 }
 
 const handleImageError = (event) => {
-  console.error('Error loading image:', event.target.src)
+  console.error('❌ Error loading image:', event.target.src)
+  console.error('❌ Image element:', event.target)
+  event.target.style.border = '2px solid red'
+}
+
+const moveImage = async (currentIndex, direction) => {
+  if (direction === 'left' && currentIndex === 0) return
+  if (direction === 'right' && currentIndex === images.value.length - 1) return
+
+  const targetIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1
+  const currentImage = images.value[currentIndex]
+  const targetImage = images.value[targetIndex]
+
+  try {
+    // Swap display order in backend
+    await api.patch(`/api/program-info/${currentImage.id}/reorder`, {
+      newDisplayOrder: targetImage.displayOrder,
+    })
+
+    await api.patch(`/api/program-info/${targetImage.id}/reorder`, {
+      newDisplayOrder: currentImage.displayOrder,
+    })
+
+    // Swap in local array
+    const temp = images.value[currentIndex]
+    images.value[currentIndex] = images.value[targetIndex]
+    images.value[targetIndex] = temp
+
+    // Update current image index if needed
+    if (currentImageIndex.value === currentIndex) {
+      currentImageIndex.value = targetIndex
+    } else if (currentImageIndex.value === targetIndex) {
+      currentImageIndex.value = currentIndex
+    }
+
+    // Reload to ensure correct order from server
+    await loadImages()
+  } catch (error) {
+    console.error('❌ Gagal mengubah urutan gambar:', error)
+    alert(error.response?.data?.message || 'Gagal mengubah urutan gambar')
+  }
 }
 
 const formatDate = (dateString) => {

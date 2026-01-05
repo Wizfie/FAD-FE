@@ -102,6 +102,14 @@
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           />
         </div>
+        <div>
+          <label class="block mb-2 text-sm text-gray-700 dark:text-gray-300">Tanggal Angkut</label>
+          <input
+            v-model="form.tglAngkut"
+            type="date"
+            class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
+          />
+        </div>
 
         <!-- Vendor -->
         <div>
@@ -131,9 +139,9 @@
             class="block w-full px-4 py-2.5 text-gray-700 bg-white border border-gray-200 rounded-lg dark:bg-gray-900 dark:text-gray-300 dark:border-gray-600 focus:border-blue-400 focus:ring-blue-300 focus:outline-none focus:ring focus:ring-opacity-40"
           >
             <option value="Open">Open</option>
-            <option value="Hold">Hold</option>
-            <option value="Closed">Closed</option>
             <option value="OnProgress">On Progress</option>
+            <option value="Closed">Closed</option>
+            <option value="Hold">Hold</option>
           </select>
         </div>
         <!-- Deskripsi -->
@@ -226,6 +234,7 @@ const props = defineProps({
       terimaFad: '',
       terimaBbm: '',
       bast: '',
+      tglAngkut: '',
       vendorId: '',
       status: '',
       deskripsi: '',
@@ -241,8 +250,6 @@ const props = defineProps({
   isEditMode: Boolean,
 })
 
-// Helper function to format date for input[type="date"]
-// Fixed: Prevent timezone conversion that causes H-1 date issue
 const formatDateForInput = (dateString) => {
   if (!dateString) return ''
 
@@ -291,6 +298,7 @@ const form = ref({
   terimaFad: formatDateForInput(props.initData.terimaFad),
   terimaBbm: formatDateForInput(props.initData.terimaBbm),
   bast: formatDateForInput(props.initData.bast),
+  tglAngkut: formatDateForInput(props.initData.tglAngkut),
   vendorId:
     props.initData.vendorId || (props.initData.vendorRel ? props.initData.vendorRel.id : '') || '',
   status: props.initData.status || '',
@@ -306,6 +314,7 @@ const resetForm = () => {
     terimaFad: '',
     terimaBbm: '',
     bast: '',
+    tglAngkut: '',
     vendorId: '',
     status: '',
     deskripsi: '',
@@ -324,11 +333,10 @@ watch(
         terimaFad: formatDateForInput(newData.terimaFad),
         terimaBbm: formatDateForInput(newData.terimaBbm),
         bast: formatDateForInput(newData.bast),
-        // Ensure vendorId is properly handled - prioritize different sources
+        tglAngkut: formatDateForInput(newData.tglAngkut),
         vendorId:
           newData.vendorId ||
           (newData.vendorRel ? newData.vendorRel.id : '') ||
-          // Try fallback by name if vendors are already loaded
           (vendors.value.length > 0 && newData.vendor ? findVendorIdByName(newData.vendor) : '') ||
           '',
       }
@@ -342,14 +350,6 @@ watch(
 
 const emit = defineEmits(['toggleForm', 'submitForm'])
 
-const toggleForm = () => {
-  emit('toggleForm')
-  if (!props.isEditMode) {
-    resetForm()
-  } else {
-    console.log('🔧 Closing form in edit mode, preserving data')
-  }
-}
 const trimInput = (key) => {
   if (form.value[key] && typeof form.value[key] === 'string') {
     form.value[key] = form.value[key].trim()
@@ -358,30 +358,9 @@ const trimInput = (key) => {
 
 const formatNoFad = (event) => {
   // Auto format No FAD to uppercase while user types
-  // Allow spaces in the middle but trim leading/trailing spaces
+  // Allow spaces, trim will be done on submit
   const value = event.target.value
-  form.value.noFad = value.trim().toUpperCase()
-}
-
-// Helper function to convert date input to local ISO string for backend
-const formatDateForBackend = (dateInputValue) => {
-  if (!dateInputValue) return null
-
-  // Parse the YYYY-MM-DD input as local date (not UTC)
-  const dateParts = dateInputValue.split('-')
-  if (dateParts.length !== 3) return null
-
-  const year = parseInt(dateParts[0])
-  const month = parseInt(dateParts[1]) - 1 // Month is 0-indexed
-  const day = parseInt(dateParts[2])
-
-  // Create date in local timezone at noon to avoid timezone issues
-  const localDate = new Date(year, month, day, 12, 0, 0, 0)
-
-  if (isNaN(localDate.getTime())) return null
-
-  // Return ISO string with local timezone to preserve the date
-  return localDate.toISOString()
+  form.value.noFad = value.toUpperCase()
 }
 
 // Helper function to convert date input to local ISO string for backend
@@ -422,20 +401,8 @@ const handleSubmit = () => {
     terimaFad: formatDateForBackend(form.value.terimaFad),
     terimaBbm: formatDateForBackend(form.value.terimaBbm),
     bast: formatDateForBackend(form.value.bast),
+    tglAngkut: formatDateForBackend(form.value.tglAngkut),
   }
-
-  console.log('📅 Form dates being sent to backend:', {
-    original: {
-      terimaFad: form.value.terimaFad,
-      terimaBbm: form.value.terimaBbm,
-      bast: form.value.bast,
-    },
-    formatted: {
-      terimaFad: formDataForBackend.terimaFad,
-      terimaBbm: formDataForBackend.terimaBbm,
-      bast: formDataForBackend.bast,
-    },
-  })
 
   emit('submitForm', formDataForBackend)
   if (!props.isEditMode) {
@@ -447,7 +414,7 @@ const handleSubmit = () => {
 const fetchVendors = async () => {
   try {
     const response = await api.get('/api/v1/get-vendor')
-    const allVendors = response.data
+    const allVendors = response.data.data
     vendors.value = allVendors.filter((vendor) => vendor.active) // Hanya vendor aktif
   } catch (error) {
     console.error('❌ Gagal mengambil data vendor:', error)

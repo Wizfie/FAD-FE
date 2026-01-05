@@ -27,6 +27,14 @@
       </h2>
 
       <form @submit.prevent="handleLogin" class="space-y-6">
+        <!-- Error message display -->
+        <div
+          v-if="errorMessage"
+          class="p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-md text-sm"
+        >
+          {{ errorMessage }}
+        </div>
+
         <div>
           <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300"
             >Username</label
@@ -70,14 +78,17 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
+import { getErrorMessage } from '@/utils/errorHandler'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
 const username = ref('')
 const password = ref('')
+const errorMessage = ref('')
 
 const handleLogin = async () => {
+  errorMessage.value = ''
   try {
     // Panggil login action dari Pinia store
     await authStore.login(username.value, password.value)
@@ -86,7 +97,7 @@ const handleLogin = async () => {
     await router.push({ name: 'dashboard' })
   } catch (err) {
     console.error('Login error:', err)
-    alert('Login failed: ' + (err.message || 'Unknown error'))
+    errorMessage.value = getErrorMessage(err)
   }
 }
 </script>

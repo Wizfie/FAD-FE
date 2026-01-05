@@ -151,7 +151,7 @@
 
       <!-- Add Group Button (Admin Only) -->
       <button
-        v-if="authStore.user?.role === 'ADMIN'"
+        v-if="canEdit"
         @click="openAddGroupModal"
         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
       >
@@ -532,7 +532,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PhotoSlot from '@/components/PhotoSlot.vue'
 import AddGroupModal from '@/components/AddGroupModal.vue'
@@ -554,15 +554,30 @@ const errorMsg = ref('')
 
 // Auth
 const authStore = useAuthStore()
-const canEdit = computed(() => authStore.user?.role === 'ADMIN')
+const canEdit = computed(() => authStore.canEdit('TPS'))
 
 // Edit states (removed - now handled in GroupDetail.vue)
 
 // View and Filter states
 const viewMode = ref('grid') // 'grid' or 'list'
-// Baca filter dari query parameters Dashboard TPS, fallback ke bulan/tahun saat ini
-const selectedMonth = ref(route.query.month || (new Date().getMonth() + 1).toString())
-const selectedYear = ref(route.query.year || new Date().getFullYear().toString())
+
+// Helper to get stored filter
+const getStoredFilter = (key, defaultValue) => {
+  try {
+    const stored = localStorage.getItem(`area_filter_${key}`)
+    return stored || defaultValue
+  } catch {
+    return defaultValue
+  }
+}
+
+// Baca filter dari query parameters Dashboard TPS, fallback ke localStorage atau bulan/tahun saat ini
+const selectedMonth = ref(
+  route.query.month || getStoredFilter('month', (new Date().getMonth() + 1).toString()),
+)
+const selectedYear = ref(
+  route.query.year || getStoredFilter('year', new Date().getFullYear().toString()),
+)
 const selectedStatus = ref('all') // 'all', 'completed', 'in-progress', 'not-started'
 
 // Lightbox states
@@ -680,10 +695,10 @@ const isCurrentOrLatestMonth = computed(() => {
 const filteredGroups = computed(() => {
   let filtered = [...comparisonGroups.value]
 
-  // Filter by month and year (dengan logic item berkelanjutan yang benar)
+  // Filter by month and year
   filtered = filtered.filter((group) => {
     const groupDate = new Date(group.createdAt)
-    const groupMonth = groupDate.getMonth() + 1 // getMonth() returns 0-11
+    const groupMonth = groupDate.getMonth() + 1
     const groupYear = groupDate.getFullYear()
     const isIncomplete = getGroupPhotoCount(group) < 3
 
@@ -696,72 +711,50 @@ const filteredGroups = computed(() => {
       return true
     }
 
-    // 2. Bulan-bulan SETELAH bulan pembuatan (berkelanjutan)
-    if (isIncomplete) {
-      // Cek apakah bulan yang dipilih >= bulan pembuatan item
-      const isCurrentOrFutureMonth =
-        groupYear < selectedYearNum ||
-        (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
+    // Jika pilih "Semua Bulan" tapi tahun tertentu, tampilkan semua item di tahun tersebut
+    if (selectedMonth.value === 'all' && selectedYear.value !== 'all') {
+      return groupYear === selectedYearNum
+    }
 
-      // Jika tahun difilter, pastikan dalam range yang benar
-      if (selectedYear.value !== 'all' && groupYear > selectedYearNum) {
-        return false
+    // Jika pilih bulan dan tahun tertentu
+    if (selectedMonth.value !== 'all' && selectedYear.value !== 'all') {
+      // Item incomplete (berkelanjutan) muncul di bulan pembuatan dan bulan-bulan setelahnya
+      if (isIncomplete) {
+        // Reject jika item dibuat setelah filter yang dipilih
+        if (groupYear > selectedYearNum) return false
+        if (groupYear === selectedYearNum && groupMonth > selectedMonthNum) return false
+
+        // Terima jika item dibuat sebelum atau sama dengan filter
+        return true
       }
 
-      return isCurrentOrFutureMonth
+      // Item complete hanya muncul di bulan/tahun pembuatannya
+      return groupYear === selectedYearNum && groupMonth === selectedMonthNum
     }
 
-    // Item yang sudah selesai hanya muncul sesuai bulan/tahun pembuatannya
-    if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
-      return false
-    }
-
-    if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
-      return false
-    }
-
-    // Item berkelanjutan muncul jika bulan filter >= bulan pembuatan
-    if (selectedMonth.value !== 'all') {
-      const isInPeriod =
-        groupYear < selectedYearNum ||
-        (groupYear === selectedYearNum && groupMonth <= selectedMonthNum)
-      return isInPeriod
-    }
-
-    // Jika hanya filter tahun, tampilkan jika tahun <= filter tahun
-    return groupYear <= selectedYearNum
+    // Default: tampilkan
+    return true
   })
 
-  // Item yang sudah selesai: hanya muncul di bulan/tahun pembuatannya
-  if (selectedMonth.value !== 'all' && groupMonth !== selectedMonthNum) {
-    return false
+  // Filter by status
+  if (selectedStatus.value !== 'all') {
+    filtered = filtered.filter((group) => {
+      const photoCount = getGroupPhotoCount(group)
+      switch (selectedStatus.value) {
+        case 'completed':
+          return photoCount === 3
+        case 'in-progress':
+          return photoCount > 0 && photoCount < 3
+        case 'not-started':
+          return photoCount === 0
+        default:
+          return true
+      }
+    })
   }
-
-  if (selectedYear.value !== 'all' && groupYear !== selectedYearNum) {
-    return false
-  }
-
-  return true
-})
-
-// Filter by status
-if (selectedStatus.value !== 'all') {
-  filtered = filtered.filter((group) => {
-    const photoCount = getGroupPhotoCount(group)
-    switch (selectedStatus.value) {
-      case 'completed':
-        return photoCount === 3
-      case 'in-progress':
-        return photoCount > 0 && photoCount < 3
-      case 'not-started':
-        return photoCount === 0
-      default:
-        return true
-    }
-  })
 
   return filtered
-}
+})
 
 // Helper functions
 const isGroupComplete = (group) => {
@@ -963,9 +956,13 @@ const deleteGroupById = async (groupId) => {
 }
 
 const resetFilters = () => {
-  selectedMonth.value = (new Date().getMonth() + 1).toString()
-  selectedYear.value = new Date().getFullYear().toString()
+  const now = new Date()
+  selectedMonth.value = (now.getMonth() + 1).toString()
+  selectedYear.value = now.getFullYear().toString()
   selectedStatus.value = 'all'
+  // Update localStorage dengan nilai terkini
+  localStorage.setItem('area_filter_month', selectedMonth.value)
+  localStorage.setItem('area_filter_year', selectedYear.value)
 }
 
 const getCategoryText = (category) => {
@@ -983,6 +980,16 @@ const closeLightbox = () => {
   lightboxGroupInfo.value = null
   lightboxInitialIndex.value = 0
 }
+
+// Watch filter changes and save to localStorage
+watch([selectedMonth, selectedYear], ([newMonth, newYear]) => {
+  try {
+    localStorage.setItem('area_filter_month', newMonth)
+    localStorage.setItem('area_filter_year', newYear)
+  } catch (error) {
+    console.warn('Failed to save filter to localStorage:', error)
+  }
+})
 
 // Initialize
 onMounted(loadData)

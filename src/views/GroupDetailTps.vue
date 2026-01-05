@@ -334,7 +334,7 @@ const errorMsg = ref('')
 
 // Auth
 const auth = useAuthStore()
-const canEdit = computed(() => auth.user?.role === 'ADMIN')
+const canEdit = computed(() => auth.canEdit('TPS'))
 
 // Edit states
 const editingStandardSummary = ref(false)

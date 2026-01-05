@@ -36,7 +36,7 @@
                   :key="index"
                   scope="col"
                   :class="[
-                    'py-5 px-4 text-sm font-bold text-gray-800 dark:text-gray-200 text-left uppercase tracking-wider bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
+                    'py-5 px-4 text-sm font-bold text-gray-800 text-center dark:text-gray-200  uppercase tracking-wider bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-r border-gray-300 dark:border-gray-600',
                     !disableSticky ? 'sticky top-0' : '',
                   ]"
                 >
@@ -48,7 +48,7 @@
                 <th
                   v-if="showAction"
                   :class="[
-                    'py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300 text-left uppercase tracking-wider bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700',
+                    'py-4 px-4 text-sm font-semibold text-gray-700 dark:text-gray-300 text-left uppercase tracking-wider bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border-r border-gray-300 dark:border-gray-600',
                     !disableSticky ? 'sticky top-0' : '',
                   ]"
                 >
@@ -88,47 +88,84 @@
                   'bg-white dark:bg-gray-900': index % 2 === 0,
                 }"
               >
-                <td class="px-4 py-4 text-sm dark:text-white whitespace-nowrap">
+                <td
+                  class="px-4 py-4 text-sm dark:text-white whitespace-nowrap border-r border-gray-200 dark:border-gray-700"
+                >
                   {{ indexNumber(row, index) }}
                 </td>
 
-                <!-- No FAD -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <!-- Terima FAD -->
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">{{ row.noFad || '-' }}</div>
                 </td>
 
                 <!-- Item -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">{{ row.item || '-' }}</div>
                 </td>
 
                 <!-- Plant -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">{{ row.plant || '-' }}</div>
                 </td>
 
-                <!-- Terima FAD -->
-                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
-                  <div class="w-30">{{ formatDate(row.terimaFad) }}</div>
-                </td>
-
-                <!-- Terima BBM -->
-                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
-                  <div class="w-30">{{ formatDate(row.terimaBbm) }}</div>
-                </td>
-
-                <!-- Tanggal Serah Terima (BAST) -->
-                <td class="px-3 py-4 text-xs w-32 whitespace-nowrap text-center dark:text-white">
-                  <div class="w-30">{{ formatDate(row.bast) }}</div>
+                <!-- Tanggal Penerimaan (Combined: Terima FAD, Terima BBM, BAST) -->
+                <td
+                  class="px-3 py-4 text-xs dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
+                  <div class="space-y-2 min-w-max text-center">
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Terima FAD:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.terimaFad) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Terima BBM:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.terimaBbm) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Serah Terima:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.bast) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Tanggal Angkut:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.tglAngkut) || '-'
+                      }}</span>
+                    </div>
+                  </div>
                 </td>
 
                 <!-- Vendor -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">{{ row.vendor || '-' }}</div>
                 </td>
 
                 <!-- Status -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">
                     <span
                       v-if="row.status"
@@ -203,7 +240,9 @@
                 </td>
 
                 <!-- Deskripsi -->
-                <td class="px-3 py-4 text-xs text-wrap dark:text-white">
+                <td
+                  class="px-3 py-4 text-xs text-wrap dark:text-white border-r border-gray-200 dark:border-gray-700"
+                >
                   <div class="w-30">{{ row.deskripsi || '-' }}</div>
                 </td>
 
@@ -212,7 +251,10 @@
                   <div class="w-30">{{ row.keterangan || '-' }}</div>
                 </td>
 
-                <td v-if="showAction" class="px-4 py-4 text-sm whitespace-nowrap">
+                <td
+                  v-if="showAction"
+                  class="px-4 py-4 text-sm whitespace-nowrap border-l border-gray-200 dark:border-gray-700"
+                >
                   <div
                     class="flex items-center gap-2 opacity-60 group-hover:opacity-100 transition-opacity duration-300"
                   >

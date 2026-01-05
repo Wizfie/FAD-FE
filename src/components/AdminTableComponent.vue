@@ -124,25 +124,44 @@
                   <div class="truncate" :title="row.plant || '-'">{{ row.plant || '-' }}</div>
                 </td>
 
-                <!-- Terima FAD -->
+                <!-- Tanggal Penerimaan (Combined: Terima FAD, Terima BBM, BAST) -->
                 <td
-                  class="px-1 py-1.5 text-xs text-center dark:text-white border-r border-gray-100 dark:border-gray-700 w-22"
+                  class="px-1 py-1.5 text-xs text-center dark:text-white border-r border-gray-100 dark:border-gray-700"
                 >
-                  <div class="text-xs">{{ formatDate(row.terimaFad) }}</div>
-                </td>
-
-                <!-- Terima BBM -->
-                <td
-                  class="px-1 py-1.5 text-xs text-center dark:text-white border-r border-gray-100 dark:border-gray-700 w-22"
-                >
-                  <div class="text-xs">{{ formatDate(row.terimaBbm) }}</div>
-                </td>
-
-                <!-- Tanggal Serah Terima (BAST) -->
-                <td
-                  class="px-1 py-1.5 text-xs text-center dark:text-white border-r border-gray-100 dark:border-gray-700 w-22"
-                >
-                  <div class="text-xs">{{ formatDate(row.bast) }}</div>
+                  <div class="space-y-2">
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Terima FAD:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.terimaFad) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Terima BBM:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.terimaBbm) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Serah Terima:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.bast) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Pengangkutan:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.tglAngkut) || '-'
+                      }}</span>
+                    </div>
+                  </div>
                 </td>
 
                 <!-- Vendor -->
@@ -357,13 +376,11 @@ const getColumnWidth = (index) => {
     1: 'w-28', // No FAD - diperbesar untuk kode yang panjang
     2: 'w-40', // Item - diperbesar untuk nama item yang panjang
     3: 'w-14', // Plant
-    4: 'w-16', // Terima FAD
-    5: 'w-16', // Terima BBM
-    6: 'w-16', // Tanggal Serah Terima
-    7: 'w-32', // Vendor - diperbesar untuk nama vendor
-    8: 'w-24', // Status
-    9: 'w-32', // Deskripsi - diperbesar untuk deskripsi panjang
-    10: 'w-32', // Keterangan - diperbesar untuk keterangan panjang
+    4: 'w-40', // Tanggal Penerimaan (combined 3 dates)
+    5: 'w-32', // Vendor - diperbesar untuk nama vendor
+    6: 'w-24', // Status
+    7: 'w-32', // Deskripsi - diperbesar untuk deskripsi panjang
+    8: 'w-32', // Keterangan - diperbesar untuk keterangan panjang
   }
   return columnWidths[index] || 'w-24'
 }

@@ -461,19 +461,26 @@
                     />
                   </svg>
                 </button>
-                <button
-                  v-for="page in Math.min(pagination.totalPages, 5)"
-                  :key="page"
-                  @click="changePage(page)"
-                  :class="[
-                    page === pagination.page
-                      ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700',
-                    'relative inline-flex items-center px-4 py-2 text-sm font-semibold',
-                  ]"
-                >
-                  {{ page }}
-                </button>
+                <template v-for="page in visiblePages" :key="page">
+                  <button
+                    v-if="page !== '...'"
+                    @click="changePage(page)"
+                    :class="[
+                      page === pagination.page
+                        ? 'z-10 bg-blue-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600'
+                        : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 dark:text-gray-100 dark:ring-gray-700 dark:hover:bg-gray-700',
+                      'relative inline-flex items-center px-4 py-2 text-sm font-semibold',
+                    ]"
+                  >
+                    {{ page }}
+                  </button>
+                  <span
+                    v-else
+                    class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 dark:text-gray-300 dark:ring-gray-700"
+                  >
+                    ...
+                  </span>
+                </template>
                 <button
                   @click="changePage(pagination.page + 1)"
                   :disabled="pagination.page >= pagination.totalPages"
@@ -542,6 +549,56 @@ const fadOperationsTotal = computed(() => {
 const securityEventsTotal = computed(() => {
   const events = summary.value.securityEvents || {}
   return (events.loginFailed || 0) + (events.unauthorized || 0)
+})
+
+// Computed page numbers for pagination
+const visiblePages = computed(() => {
+  const current = pagination.value.page
+  const total = pagination.value.totalPages
+  const maxVisible = 5
+  const pages = []
+
+  if (total <= maxVisible) {
+    // Show all pages if total is less than max
+    for (let i = 1; i <= total; i++) {
+      pages.push(i)
+    }
+  } else {
+    // Always show first page
+    pages.push(1)
+
+    let start = Math.max(2, current - 1)
+    let end = Math.min(total - 1, current + 1)
+
+    // Adjust if we're near the start
+    if (current <= 3) {
+      end = 4
+    }
+    // Adjust if we're near the end
+    else if (current >= total - 2) {
+      start = total - 3
+    }
+
+    // Add ellipsis after first page if needed
+    if (start > 2) {
+      pages.push('...')
+    }
+
+    // Add middle pages
+    for (let i = start; i <= end; i++) {
+      pages.push(i)
+    }
+
+    // Add ellipsis before last page if needed
+    if (end < total - 1) {
+      pages.push('...')
+    }
+
+    // Always show last page
+    pages.push(total)
+  }
+
+  return pages
 })
 
 // Fetch summary data

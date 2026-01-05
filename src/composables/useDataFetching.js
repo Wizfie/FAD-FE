@@ -47,7 +47,7 @@ export function useDataFetching(endpoint, options = {}) {
       const response = await api.get(endpoint, { params: requestParams })
 
       if (response.status === 200 && response.data) {
-        const payload = response.data
+        const payload = response.data.data
 
         // Transform data jika ada function transformer
         const transformedData = transform

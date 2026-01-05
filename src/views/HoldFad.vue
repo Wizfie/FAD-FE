@@ -105,9 +105,7 @@ const headers = [
   'No FAD',
   'Item',
   'Plant',
-  'Terima FAD',
-  'Terima BBM',
-  'Tanggal Serah Terima',
+  'Tanggal Penerimaan & Pengangkutan',
   'Vendor',
   'Status',
   'Deskripsi',
@@ -143,7 +141,7 @@ const getData = async (page = currentPage.value) => {
     }
     const response = await api.get('/api/v1/get-fad', { params })
     if (response.status === 200 && response.data) {
-      const payload = response.data
+      const payload = response.data.data
       const rows = Array.isArray(payload.data) ? payload.data : []
       dataFad.value = rows.map((item) => ({
         noFad: item.noFad ?? '',
@@ -152,6 +150,7 @@ const getData = async (page = currentPage.value) => {
         terimaFad: item.terimaFad ?? '',
         terimaBbm: item.terimaBbm ?? '',
         bast: item.bast ?? '',
+        tglAngkut: item.tglAngkut ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',

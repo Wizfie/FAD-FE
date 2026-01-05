@@ -37,25 +37,40 @@
       </div>
 
       <!-- Role and Status badges -->
-      <div class="mt-3 grid grid-cols-2 gap-2">
-        <div class="flex items-center gap-2">
+      <div class="mt-3 flex items-center gap-2 flex-wrap">
+        <span
+          :class="getRoleClass(user.role)"
+          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+          {{ capitalize(user.role) }}
+        </span>
+        <span
+          :class="getStatusClass(user.status)"
+          class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
+          {{ capitalize(user.status) }}
+        </span>
+      </div>
+
+      <!-- Modules -->
+      <div class="mt-3">
+        <div class="text-[11px] text-slate-500 mb-1">Access Modules</div>
+        <div v-if="user.role === 'SUPER_ADMIN'" class="text-xs text-slate-400 italic">
+          All Access
+        </div>
+        <div v-else-if="user.modules && user.modules.length > 0" class="flex flex-wrap gap-1">
           <span
-            :class="getRoleClass(user.role)"
-            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+            v-for="module in user.modules"
+            :key="module"
+            :class="getModuleClass(module)"
+            class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
           >
-            <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-            {{ capitalize(user.role) }}
+            {{ module }}
           </span>
         </div>
-        <div class="flex items-center justify-end">
-          <span
-            :class="getStatusClass(user.status)"
-            class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-medium"
-          >
-            <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
-            {{ capitalize(user.status) }}
-          </span>
-        </div>
+        <div v-else class="text-xs text-slate-400">No modules assigned</div>
       </div>
 
       <!-- Timestamps -->
@@ -135,6 +150,17 @@ const getStatusClass = (status) => {
       return 'text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-900/30'
     case 'INACTIVE':
       return 'text-red-700 bg-red-100 dark:text-red-300 dark:bg-red-900/30'
+    default:
+      return 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-700/40'
+  }
+}
+
+const getModuleClass = (module) => {
+  switch (module) {
+    case 'FAD':
+      return 'text-blue-700 bg-blue-100 dark:text-blue-300 dark:bg-blue-900/30'
+    case 'TPS':
+      return 'text-teal-700 bg-teal-100 dark:text-teal-300 dark:bg-teal-900/30'
     default:
       return 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-700/40'
   }

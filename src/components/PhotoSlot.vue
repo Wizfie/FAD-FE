@@ -284,7 +284,7 @@ const { getImageUrl } = useImageUrl()
 
 // Auth & permissions
 const authStore = useAuthStore()
-const canEdit = computed(() => authStore.user?.role === 'ADMIN')
+const canEdit = computed(() => authStore.canEdit('TPS'))
 
 // Modal state
 const { isOpen: showUploadModal, open: openUploadModal, close: closeUploadModal } = useModal()

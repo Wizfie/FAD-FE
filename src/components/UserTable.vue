@@ -9,6 +9,7 @@
             <th class="px-4 py-3">No</th>
             <th class="px-4 py-3">Username / Email</th>
             <th class="px-4 py-3">Role</th>
+            <th class="px-4 py-3">Modules</th>
             <th class="px-4 py-3">Status</th>
             <th class="px-4 py-3">Last Login</th>
             <th class="px-4 py-3">Updated</th>
@@ -19,7 +20,7 @@
           <!-- Loading state -->
           <tr v-if="loading">
             <td
-              colspan="7"
+              colspan="8"
               class="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400"
             >
               Loading…
@@ -28,7 +29,7 @@
 
           <!-- Error state -->
           <tr v-else-if="error">
-            <td colspan="7" class="px-4 py-8 text-center text-sm text-red-600">
+            <td colspan="8" class="px-4 py-8 text-center text-sm text-red-600">
               {{ error }}
             </td>
           </tr>
@@ -57,6 +58,23 @@
                 <span class="h-1.5 w-1.5 rounded-full bg-current"></span>
                 {{ capitalize(user.role) }}
               </span>
+            </td>
+
+            <td class="px-4 py-3">
+              <div v-if="user.role === 'SUPER_ADMIN'" class="text-xs text-slate-400 italic">
+                All Access
+              </div>
+              <div v-else-if="user.modules && user.modules.length > 0" class="flex flex-wrap gap-1">
+                <span
+                  v-for="module in user.modules"
+                  :key="module"
+                  :class="getModuleClass(module)"
+                  class="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
+                >
+                  {{ module }}
+                </span>
+              </div>
+              <div v-else class="text-xs text-slate-400">No modules</div>
             </td>
 
             <td class="px-4 py-3">
@@ -154,5 +172,11 @@ const getStatusClass = (status) => {
     default:
       return 'text-slate-700 bg-slate-100 dark:text-slate-300 dark:bg-slate-700/40'
   }
+}
+
+const getModuleClass = (module) => {
+  if (module === 'FAD') return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+  if (module === 'TPS') return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400'
+  return 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
 }
 </script>

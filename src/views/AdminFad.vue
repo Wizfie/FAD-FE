@@ -5,12 +5,12 @@
       <AdminHeader
         title="Dashboard FAD ADMIN"
         :total-items="meta.total"
-        :show-menu="authStore.canCreate || authStore.canEdit || authStore.canDelete"
+        :show-menu="authStore.canEdit('FAD')"
       >
         <template #menu>
           <div>
             <button
-              v-if="authStore.canCreate"
+              v-if="authStore.canEdit('FAD')"
               @click="handleAddFad"
               class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
@@ -38,36 +38,6 @@
                 />
               </svg>
               Vendor
-            </button>
-
-            <button
-              @click="handleOpenSecurityLogs"
-              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-              Security Logs
-            </button>
-
-            <button
-              @click="handleOpenChangelog"
-              class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            >
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                />
-              </svg>
-              Changelog
             </button>
 
             <button
@@ -108,7 +78,7 @@
     >
       <div class="py-2">
         <button
-          v-if="authStore.canCreate"
+          v-if="authStore.canEdit('FAD')"
           @click="handleAddFadMobile"
           class="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
         >
@@ -443,6 +413,7 @@ const formToggle = useFormToggle({
   terimaFad: '',
   terimaBbm: '',
   bast: '',
+  tanggalAngkut: '',
   vendorId: '',
   status: '',
   deskripsi: '',
@@ -465,9 +436,7 @@ const headers = [
   'No FAD',
   'Item',
   'Plant',
-  'Terima FAD',
-  'Terima BBM',
-  'Tanggal Serah Terima',
+  'Tanggal Penerimaan & Pengangkutan',
   'Vendor',
   'Status',
   'Deskripsi',
@@ -564,12 +533,6 @@ const handleSubmitForm = async (formData) => {
     const item = String(formData.item || '').trim()
 
     if (!noFad || noFad.length === 0) {
-      console.error('❌ Client validation FAILED: No FAD is empty')
-      console.error('- Original formData.noFad:', formData.noFad)
-      console.error('- After String():', String(formData.noFad || ''))
-      console.error('- After trim():', noFad)
-      console.error('- Boolean check (!noFad):', !noFad)
-      console.error('- Length check (noFad.length):', noFad.length)
       alert('❌ No FAD wajib diisi! Debug: Original=' + formData.noFad + ', Processed=' + noFad)
       return
     }
@@ -581,12 +544,6 @@ const handleSubmitForm = async (formData) => {
     formData.noFad = noFad
 
     if (!item || item.length === 0) {
-      console.error('❌ Client validation FAILED: Item is empty')
-      console.error('- Original formData.item:', formData.item)
-      console.error('- After String():', String(formData.item || ''))
-      console.error('- After trim():', item)
-      console.error('- Boolean check (!item):', !item)
-      console.error('- Length check (item.length):', item.length)
       alert('❌ Item wajib diisi! Debug: Original=' + formData.item + ', Processed=' + item)
       return
     }

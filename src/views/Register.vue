@@ -9,6 +9,14 @@
 
       <!-- Form login -->
       <form @submit.prevent="handleRegister">
+        <!-- Error message display -->
+        <div
+          v-if="errorMessage"
+          class="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 rounded-md text-sm"
+        >
+          {{ errorMessage }}
+        </div>
+
         <div class="mb-6">
           <label for="username" class="block text-sm font-medium text-gray-600 dark:text-gray-300"
             >Username *</label
@@ -62,10 +70,40 @@
             class="w-full px-4 py-3 mt-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-400"
             required
           >
-            <option value="EXTERNAL" selected>EXTERNAL (Default)</option>
-            <option value="INTERNAL">INTERNAL</option>
-            <option value="ADMIN">ADMIN</option>
+            <option value="USER">USER (View Only)</option>
+            <option value="ADMIN">ADMIN (Full CRUD per Module)</option>
+            <option value="SUPER_ADMIN">SUPER ADMIN (All Access)</option>
           </select>
+        </div>
+
+        <!-- Module Selection (shown only for non-SUPER_ADMIN) -->
+        <div v-if="role !== 'SUPER_ADMIN'" class="mb-6">
+          <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-2"
+            >Access Modules *</label
+          >
+          <div class="space-y-2">
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                value="FAD"
+                v-model="modules"
+                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">FAD Module</span>
+            </label>
+            <label class="flex items-center">
+              <input
+                type="checkbox"
+                value="TPS"
+                v-model="modules"
+                class="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+              />
+              <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">TPS Module</span>
+            </label>
+          </div>
+          <p v-if="showModuleError" class="text-red-500 text-xs mt-1">
+            Please select at least one module
+          </p>
         </div>
 
         <!-- Register Button -->
@@ -89,24 +127,46 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/stores/axios'
+import { getErrorMessage } from '@/utils/errorHandler'
 
 const router = useRouter()
 
 const username = ref('')
 const password = ref('')
-const role = ref('EXTERNAL')
+const role = ref('USER')
 const email = ref('')
+const modules = ref([])
+const showModuleError = ref(false)
+const errorMessage = ref('')
+
+// Reset modules when role changes
+watch(role, (newRole) => {
+  if (newRole === 'SUPER_ADMIN') {
+    modules.value = []
+    showModuleError.value = false
+  }
+})
 
 const handleRegister = async () => {
+  errorMessage.value = ''
+
+  // Validate modules for non-SUPER_ADMIN
+  if (role.value !== 'SUPER_ADMIN' && modules.value.length === 0) {
+    showModuleError.value = true
+    return
+  }
+  showModuleError.value = false
+
   try {
     const body = {
       username: username.value,
       password: password.value,
       role: role.value,
       email: email.value,
+      modules: role.value === 'SUPER_ADMIN' ? null : modules.value,
     }
     const regis = await api.post('/api/register', body)
     console.log(regis)
@@ -114,7 +174,8 @@ const handleRegister = async () => {
     alert('Registration successful! Please login.')
     router.push({ name: 'login' })
   } catch (err) {
-    alert('Registration failed: ' + err.message)
+    console.error('Registration error:', err)
+    errorMessage.value = getErrorMessage(err)
   }
 }
 </script>

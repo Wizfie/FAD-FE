@@ -13,6 +13,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Dashboard FAD -->
         <div
+          v-if="authStore.hasModule('FAD')"
           @click="navigateTo('dashboard-fad')"
           class="group cursor-pointer bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 hover:shadow-xl hover:border-blue-300 dark:hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-2"
         >
@@ -100,6 +101,7 @@
 
         <!-- Dashboard TPS -->
         <div
+          v-if="authStore.hasModule('TPS')"
           @click="navigateTo('dashboard-tps')"
           class="group cursor-pointer bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-8 hover:shadow-xl hover:border-green-300 dark:hover:border-green-500 transition-all duration-300 transform hover:-translate-y-2"
         >

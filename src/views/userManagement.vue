@@ -8,6 +8,19 @@
         <div class="mx-auto max-w-7xl px-4 py-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
+              <button
+                @click="$router.back()"
+                class="rounded-lg p-2 text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700"
+              >
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
               <h2 class="truncate text-lg sm:text-xl font-semibold text-slate-800 dark:text-white">
                 User Management
               </h2>
@@ -119,7 +132,7 @@
       </div>
 
       <!-- User Form Modal -->
-      <BaseModal v-model="showUserModal" size="lg" @close="closeUserModal">
+      <BaseModal v-model="showUserModal" size="xl" @close="closeUserModal">
         <template #header>
           <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">
             {{ editing ? 'Edit User' : 'Add User' }}
@@ -183,6 +196,7 @@ import { usePagination } from '@/composables/usePagination'
 import { useFormToggle } from '@/composables/useFormToggle'
 import api from '@/stores/axios'
 import { useAuthStore } from '@/stores/auth'
+import { getErrorMessage, getErrorCode } from '@/utils/errorHandler'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -192,11 +206,8 @@ const {
   currentPage: page,
   updatePage: handlePageChange,
   totalItems,
-  totalPages,
   nextPage,
   prevPage,
-  hasPrevPage,
-  hasNextPage,
 } = usePagination(1, 5)
 
 // Data fetching
@@ -206,9 +217,7 @@ const {
   loading,
   error: errorMsg,
   searchQuery,
-  fetchData,
   refresh,
-  search,
   paginate,
 } = useDataFetching('/api/users', {
   defaultParams: {
@@ -244,6 +253,7 @@ const {
   email: '',
   role: 'EXTERNAL',
   status: 'ACTIVE',
+  modules: [],
   password: '',
 })
 
@@ -294,6 +304,7 @@ const openEditModal = (user) => {
     email: user.email,
     role: user.role,
     status: user.status,
+    modules: user.modules || [],
     password: '',
   }
   openForm(userData, true) // Edit mode
@@ -325,6 +336,14 @@ const handleSaveUser = async () => {
     }
   }
 
+  // Validate modules for non-SUPER_ADMIN users
+  if (form.role !== 'SUPER_ADMIN') {
+    if (!form.modules || !Array.isArray(form.modules) || form.modules.length === 0) {
+      alert('❌ User harus memiliki minimal 1 module access')
+      return
+    }
+  }
+
   saving.value = true
   try {
     const payload = {
@@ -332,6 +351,12 @@ const handleSaveUser = async () => {
       email: form.email ? form.email.trim() : null,
       role: form.role,
       status: form.status,
+    }
+
+    // Add modules to payload for non-SUPER_ADMIN users
+    if (form.role !== 'SUPER_ADMIN') {
+      // Ensure modules is sent as array (validation above ensures it has items)
+      payload.modules = Array.isArray(form.modules) ? form.modules : []
     }
 
     if (editing.value) {
@@ -375,58 +400,34 @@ const handleSaveUser = async () => {
   } catch (err) {
     console.error('❌ Save user failed:', err)
 
-    // Enhanced error handling
-    if (err.response) {
-      const status = err.response.status
-      const errorData = err.response.data
-      const errorMessage = errorData?.message || errorData?.error || 'Terjadi kesalahan'
+    // Gunakan error handler untuk mendapatkan pesan error
+    const errorMessage = getErrorMessage(err)
+    const errorCode = getErrorCode(err)
+    const status = err.response?.status
 
-      console.error(`Server error (${status}):`, errorMessage)
+    console.error(`Server error (${status}):`, errorMessage)
 
-      if (status === 400) {
-        // Bad request - validation errors
-        if (
-          errorMessage.toLowerCase().includes('username') &&
-          errorMessage.toLowerCase().includes('exists')
-        ) {
-          alert('❌ Username sudah digunakan!\n\nSilakan pilih username yang berbeda.')
-        } else if (
-          errorMessage.toLowerCase().includes('email') &&
-          errorMessage.toLowerCase().includes('exists')
-        ) {
-          alert('❌ Email sudah terdaftar!\n\nSilakan gunakan email yang berbeda.')
-        } else if (
-          errorMessage.toLowerCase().includes('duplicate') ||
-          errorMessage.toLowerCase().includes('unique')
-        ) {
-          alert(
-            '❌ Data sudah ada!\n\nUsername atau email sudah digunakan. Silakan gunakan data yang berbeda.',
-          )
-        } else if (errorMessage.toLowerCase().includes('validation')) {
-          alert(`❌ Data tidak valid:\n\n${errorMessage}`)
-        } else {
-          alert(`❌ Data tidak valid:\n\n${errorMessage}`)
-        }
-      } else if (status === 401) {
-        alert('❌ Sesi login telah berakhir.\n\nSilakan login kembali.')
-      } else if (status === 403) {
-        alert('❌ Akses ditolak!\n\nAnda tidak memiliki permission untuk menambah user.')
-      } else if (status === 422) {
-        // Validation error
-        alert(`❌ Validasi gagal:\n\n${errorMessage}`)
-      } else if (status === 500) {
-        alert('❌ Terjadi kesalahan di server.\n\nSilakan coba lagi dalam beberapa saat.')
+    // Tampilkan pesan error yang lebih user-friendly berdasarkan status dan code
+    if (status === 409) {
+      // Conflict - duplikat data
+      if (errorCode === 'DUPLICATE_USERNAME') {
+        alert('❌ Username sudah digunakan!\n\nSilakan pilih username yang berbeda.')
+      } else if (errorCode === 'DUPLICATE_EMAIL') {
+        alert('❌ Email sudah terdaftar!\n\nSilakan gunakan email yang berbeda.')
       } else {
-        alert(`❌ Gagal menyimpan user:\n\n${errorMessage}`)
+        alert(`❌ Data sudah ada!\n\n${errorMessage}`)
       }
-    } else if (err.request) {
-      // Network error
-      console.error('Network error:', err.request)
-      alert('❌ Tidak dapat terhubung ke server.\n\nPeriksa koneksi internet Anda dan coba lagi.')
+    } else if (status === 400) {
+      // Bad request - validation errors
+      alert(`❌ Data tidak valid:\n\n${errorMessage}`)
+    } else if (status === 401) {
+      alert('❌ Sesi login telah berakhir.\n\nSilakan login kembali.')
+    } else if (status === 403) {
+      alert('❌ Akses ditolak!\n\nAnda tidak memiliki permission untuk menambah user.')
+    } else if (status === 500) {
+      alert('❌ Terjadi kesalahan di server.\n\nSilakan coba lagi dalam beberapa saat.')
     } else {
-      // Other error
-      console.error('Error:', err.message)
-      alert(`❌ Terjadi kesalahan:\n\n${err.message}`)
+      alert(`❌ Gagal menyimpan user:\n\n${errorMessage}`)
     }
   } finally {
     saving.value = false

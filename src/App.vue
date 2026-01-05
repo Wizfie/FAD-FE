@@ -4,12 +4,15 @@
     <div class="min-h-screen bg-white dark:bg-gray-900">
       <router-view />
     </div>
+    <!-- Global Toast Container -->
+    <ToastContainer />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import Navbar from './components/Navbar.vue'
+import ToastContainer from './components/ToastContainer.vue'
 
 const isDarkMode = ref(false)
 

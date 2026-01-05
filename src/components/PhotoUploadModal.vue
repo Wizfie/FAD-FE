@@ -180,6 +180,24 @@ Catatan tambahan bisa ditulis di sini..."
           </div>
         </div>
 
+        <!-- Optional Date (for backdate) -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Tanggal Foto Diambil (Opsional)
+          </label>
+          <input
+            v-model="formData.uploadDate"
+            type="date"
+            :max="maxDate"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+            placeholder="Kosongkan untuk tanggal hari ini"
+          />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Kosongkan jika foto diambil hari ini. Isi jika ingin backdate foto ke tanggal
+            sebelumnya.
+          </p>
+        </div>
+
         <!-- Buttons -->
         <div class="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <button
@@ -507,7 +525,6 @@ const handleSubmit = async () => {
     formDataToSend.append('files', selectedFile.value)
     formDataToSend.append('areaId', props.areaId.toString())
 
-<<<<<<< HEAD
     // Prepare file metadata
     const metadata = {
       comparisonGroupId: props.groupId,
@@ -528,8 +545,6 @@ const handleSubmit = async () => {
 
     formDataToSend.append('fileMeta', JSON.stringify([metadata]))
 
-=======
->>>>>>> c75fbb5f3fd975137b6acddd07edc0ea15b4b890
     const response = await api.post('/api/photos', formDataToSend, {
       headers: {
         'Content-Type': 'multipart/form-data',

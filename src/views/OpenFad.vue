@@ -106,9 +106,7 @@ const headersFad = [
   'No FAD',
   'Item',
   'Plant',
-  'Terima FAD',
-  'Terima BBM',
-  'Tanggal Serah Terima',
+  'Tanggal Penerimaan & Pengangkutan',
   'Vendor',
   'Status',
   'Deskripsi',
@@ -140,6 +138,7 @@ const prevPage = () => {
 // Ambil Data
 const getData = async (page = currentPage.value) => {
   try {
+    console.log('🔍 [OpenFad] Fetching data...')
     const params = {
       q: searchQuery.value ?? '',
       page,
@@ -148,8 +147,9 @@ const getData = async (page = currentPage.value) => {
       status: open.value,
     }
     const response = await api.get('/api/v1/get-fad', { params })
+
     if (response.status === 200 && response.data) {
-      const payload = response.data
+      const payload = response.data.data
       const rows = Array.isArray(payload.data) ? payload.data : []
 
       dataFad.value = rows.map((item) => ({
@@ -159,6 +159,7 @@ const getData = async (page = currentPage.value) => {
         terimaFad: item.terimaFad ?? '',
         terimaBbm: item.terimaBbm ?? '',
         bast: item.bast ?? '',
+        tglAngkut: item.tglAngkut ?? '',
         vendor: item.vendor ?? item.vendorRel?.name ?? '',
         status: item.status ?? '',
         deskripsi: item.deskripsi ?? '',
@@ -169,9 +170,16 @@ const getData = async (page = currentPage.value) => {
 
       totalItems.value = payload.meta?.total ?? rows.length
       currentPage.value = payload.meta?.page ?? Number(page)
+
+      console.log('✅ [OpenFad] Data set successfully')
+      console.log('  - dataFad.value length:', dataFad.value.length)
+      console.log('  - totalItems:', totalItems.value)
+      console.log('  - filteredData length:', filteredData.value.length)
     }
   } catch (error) {
-    console.error('Terjadi kesalahan saat mengambil data:', error)
+    console.error('❌ [OpenFad] Error fetching data:', error)
+    console.error('  - Status:', error.response?.status)
+    console.error('  - Message:', error.message)
   }
 }
 

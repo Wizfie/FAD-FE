@@ -6,9 +6,26 @@
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard TPS</h1>
       </div>
       <div class="flex items-center gap-3">
+        <!-- Program Info Button -->
+        <router-link
+          v-if="authStore.hasModule('TPS')"
+          :to="{ name: 'program-info' }"
+          class="inline-flex items-center px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+        >
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
+            />
+          </svg>
+          Program Info
+        </router-link>
+
         <!-- Add Area Button -->
         <button
-          v-if="authStore.user?.role === `ADMIN`"
+          v-if="authStore.canEdit('TPS')"
           @click="navigateToAddArea"
           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
         >
@@ -21,24 +38,6 @@
             ></path>
           </svg>
           Tambah Area
-        </button>
-
-        <!-- Program 5R Button -->
-        <button
-          @click="navigateToProgram5R"
-          class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
-          title="Informasi Program 5R"
-        >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          <span class="hidden sm:inline">Program 5R</span>
-          <span class="sm:hidden">5R</span>
         </button>
 
         <!-- Dashboard Switcher -->
@@ -253,8 +252,8 @@
 
               <!-- Action Buttons (Admin Only) -->
               <div
-                v-if="authStore.user?.role === 'ADMIN'"
-                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                v-if="authStore.canEdit('TPS')"
+                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-colors"
               >
                 <!-- Edit Button -->
                 <button
@@ -716,7 +715,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/stores/axios.js'
 import DashboardSwitcher from '@/components/DashboardSwitcher.vue'
@@ -799,9 +798,22 @@ const canDeleteArea = computed(() => {
   return !areaProgress || (areaProgress.totalGroups === 0 && areaProgress.totalPhotos === 0)
 })
 
-// Filter states - baca dari query parameters jika ada
-const selectedMonth = ref(route.query.month || (currentDate.getMonth() + 1).toString()) // Current month (1-12)
-const selectedYear = ref(route.query.year || currentDate.getFullYear().toString()) // Current year
+// Filter states - restore from localStorage or use current date
+const getStoredFilter = (key, defaultValue) => {
+  try {
+    const stored = localStorage.getItem(`tps_filter_${key}`)
+    return stored || defaultValue
+  } catch {
+    return defaultValue
+  }
+}
+
+const selectedMonth = ref(
+  route.query.month || getStoredFilter('month', (currentDate.getMonth() + 1).toString()),
+) // Current month (1-12)
+const selectedYear = ref(
+  route.query.year || getStoredFilter('year', currentDate.getFullYear().toString()),
+) // Current year
 
 const areasWithProgress = computed(() => {
   return areas.value.map((area) => {
@@ -980,11 +992,12 @@ const loadAreasProgress = async () => {
 
 // Filter functions
 const resetFilters = () => {
-  selectedMonth.value = 'all'
-  selectedYear.value = 'all'
-  // Hapus dari localStorage saat reset
-  localStorage.removeItem('tps-filter-month')
-  localStorage.removeItem('tps-filter-year')
+  const now = new Date()
+  selectedMonth.value = (now.getMonth() + 1).toString()
+  selectedYear.value = now.getFullYear().toString()
+  // Update localStorage dengan nilai terkini
+  localStorage.setItem('tps_filter_month', selectedMonth.value)
+  localStorage.setItem('tps_filter_year', selectedYear.value)
   loadAreasProgress()
 }
 
@@ -1004,10 +1017,6 @@ const navigateToArea = (area) => {
 const navigateToAddArea = () => {
   showAddAreaModal.value = true
   newAreaName.value = ''
-}
-
-const navigateToProgram5R = () => {
-  router.push('/program-5r')
 }
 
 // Reusable validation error handler
@@ -1225,6 +1234,16 @@ const handleLogout = async () => {
     console.error('Logout error:', error)
   }
 }
+
+// Watch filter changes and save to localStorage
+watch([selectedMonth, selectedYear], ([newMonth, newYear]) => {
+  try {
+    localStorage.setItem('tps_filter_month', newMonth)
+    localStorage.setItem('tps_filter_year', newYear)
+  } catch (error) {
+    console.warn('Failed to save filter to localStorage:', error)
+  }
+})
 
 // Initialize
 onMounted(load)

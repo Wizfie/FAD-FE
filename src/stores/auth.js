@@ -12,16 +12,36 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (s) => !!s.accessToken,
     getAccessToken: (s) => s.accessToken,
     getUser: (s) => s.user,
-    // Role-based permissions
-    isAdmin: (s) => s.user?.role === 'ADMIN',
-    isInternal: (s) => s.user?.role === 'INTERNAL',
-    isExternal: (s) => s.user?.role === 'EXTERNAL',
-    // Permission checks
-    canCreate: (s) => s.user?.role === 'ADMIN',
-    canEdit: (s) => s.user?.role === 'ADMIN',
-    canDelete: (s) => s.user?.role === 'ADMIN',
-    canManageUsers: (s) => s.user?.role === 'ADMIN',
-    canViewOnly: (s) => s.user?.role !== 'ADMIN',
+
+    // New role-based permissions
+    isSuperAdmin: (s) => s.user?.role === 'SUPER_ADMIN',
+    isAdmin: (s) => ['ADMIN', 'SUPER_ADMIN'].includes(s.user?.role),
+    isUser: (s) => s.user?.role === 'USER',
+
+    // Module access check
+    hasModule: (s) => (module) => {
+      if (s.user?.role === 'SUPER_ADMIN') return true
+      return (s.user?.modules || []).includes(module)
+    },
+
+    // Check if can edit in specific module (ADMIN or SUPER_ADMIN)
+    canEdit: (s) => (module) => {
+      if (s.user?.role === 'SUPER_ADMIN') return true
+      if (s.user?.role !== 'ADMIN') return false
+      return (s.user?.modules || []).includes(module)
+    },
+
+    // Get accessible modules
+    accessibleModules: (s) => {
+      if (s.user?.role === 'SUPER_ADMIN') return ['FAD', 'TPS']
+      return s.user?.modules || []
+    },
+
+    // Legacy support (backward compatible)
+    canCreate: (s) => ['ADMIN', 'SUPER_ADMIN'].includes(s.user?.role),
+    canDelete: (s) => ['ADMIN', 'SUPER_ADMIN'].includes(s.user?.role),
+    canManageUsers: (s) => s.user?.role === 'SUPER_ADMIN',
+    canViewOnly: (s) => s.user?.role === 'USER',
   },
   actions: {
     async login(username, password) {
