@@ -71,100 +71,112 @@
     </div>
 
     <!-- Controls -->
-    <div class="mb-6 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-      <!-- Filters -->
-      <div class="flex flex-wrap gap-3">
-        <!-- Month Filter -->
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bulan:</label>
-          <select
-            v-model="selectedMonth"
-            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">Semua Bulan</option>
-            <option v-for="month in availableMonths" :key="month.value" :value="month.value">
-              {{ month.label }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Year Filter -->
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tahun:</label>
-          <select
-            v-model="selectedYear"
-            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">Semua Tahun</option>
-            <option v-for="year in availableYears" :key="year" :value="year">
-              {{ year }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Status Filter -->
-        <div class="flex items-center gap-2">
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
-          <select
-            v-model="selectedStatus"
-            class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="all">Semua</option>
-            <option value="completed">Selesai</option>
-            <option value="in-progress">In Progress</option>
-            <option value="not-started">Belum Mulai</option>
-          </select>
-        </div>
-
-        <!-- View Toggle -->
-        <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
-          <button
-            @click="viewMode = 'grid'"
-            :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
-            class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-              ></path>
-            </svg>
-          </button>
-          <button
-            @click="viewMode = 'list'"
-            :class="viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
-            class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M4 6h16M4 10h16M4 14h16M4 18h16"
-              ></path>
-            </svg>
-          </button>
-        </div>
+    <div class="mb-6 flex flex-col gap-4">
+      <!-- Search Bar -->
+      <div class="w-full">
+        <input
+          v-model="searchGroupTitle"
+          type="text"
+          placeholder="Cari berdasarkan judul grup..."
+          class="w-full px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+        />
       </div>
 
-      <!-- Add Group Button (Admin Only) -->
-      <button
-        v-if="canEdit"
-        @click="openAddGroupModal"
-        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 4v16m8-8H4"
-          ></path>
-        </svg>
-        Tambah Grup Baru
-      </button>
+      <!-- Filters -->
+      <div class="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div class="flex flex-wrap gap-3">
+          <!-- Month Filter -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Bulan:</label>
+            <select
+              v-model="selectedMonth"
+              class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Semua Bulan</option>
+              <option v-for="month in availableMonths" :key="month.value" :value="month.value">
+                {{ month.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Year Filter -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Tahun:</label>
+            <select
+              v-model="selectedYear"
+              class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Semua Tahun</option>
+              <option v-for="year in availableYears" :key="year" :value="year">
+                {{ year }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Status Filter -->
+          <div class="flex items-center gap-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Status:</label>
+            <select
+              v-model="selectedStatus"
+              class="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="all">Semua</option>
+              <option value="completed">Selesai</option>
+              <option value="in-progress">In Progress</option>
+              <option value="not-started">Belum Mulai</option>
+            </select>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+            <button
+              @click="viewMode = 'grid'"
+              :class="viewMode === 'grid' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
+              class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                ></path>
+              </svg>
+            </button>
+            <button
+              @click="viewMode = 'list'"
+              :class="viewMode === 'list' ? 'bg-white dark:bg-gray-600 shadow-sm' : ''"
+              class="p-1.5 rounded text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Add Group Button (Admin Only) -->
+        <button
+          v-if="canEdit"
+          @click="openAddGroupModal"
+          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 whitespace-nowrap"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          Tambah Grup Baru
+        </button>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -560,6 +572,7 @@ const canEdit = computed(() => authStore.canEdit('TPS'))
 
 // View and Filter states
 const viewMode = ref('grid') // 'grid' or 'list'
+const searchGroupTitle = ref('') // search state
 
 // Helper to get stored filter
 const getStoredFilter = (key, defaultValue) => {
@@ -750,6 +763,15 @@ const filteredGroups = computed(() => {
         default:
           return true
       }
+    })
+  }
+
+  // Filter by search title
+  if (searchGroupTitle.value.trim()) {
+    const searchTerm = searchGroupTitle.value.toLowerCase().trim()
+    filtered = filtered.filter((group) => {
+      const groupTitle = (group.title || `Grup ${group.id}`).toLowerCase()
+      return groupTitle.includes(searchTerm)
     })
   }
 

@@ -33,9 +33,16 @@
 
             <div class="flex items-center gap-2">
               <DashboardSwitcher />
-              <BaseButton variant="danger" size="sm" @click="handleLogout">
+              <BaseButton
+                variant="danger"
+                size="sm"
+                @click="handleLogout"
+                :loading="islogout"
+                :disabled="islogout"
+              >
                 <template #icon>
                   <svg
+                    v-if="!isLogout"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -50,7 +57,9 @@
                     />
                   </svg>
                 </template>
-                <span class="hidden sm:inline">Logout</span>
+                <span class="hidden sm:inline">
+                  {{ isLogout ? 'Logging out...' : 'Logout' }}
+                </span>
               </BaseButton>
             </div>
           </div>
@@ -62,7 +71,7 @@
         <!-- Search and Actions -->
         <UserControls
           v-model:search="q"
-          :can-manage="auth.canManageUsers"
+          :can-manage="authStore.canManageUsers"
           @add-user="openAddModal"
         />
         <!-- Desktop Table -->
@@ -71,7 +80,7 @@
           :loading="loading"
           :error="errorMsg"
           :meta="meta"
-          :can-manage="auth.canManageUsers"
+          :can-manage="authStore.canManageUsers"
           @edit="openEditModal"
           @delete="openDeleteModalHandler"
           class="hidden md:block"
@@ -83,7 +92,7 @@
           :loading="loading"
           :error="errorMsg"
           :meta="meta"
-          :can-manage="auth.canManageUsers"
+          :can-manage="authStore.canManageUsers"
           @edit="openEditModal"
           @delete="openDeleteModalHandler"
           class="md:hidden"
@@ -180,8 +189,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, watch } from 'vue'
 import BaseButton from '@/components/BaseButton.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -194,12 +202,17 @@ import { useDataFetching } from '@/composables/useDataFetching'
 import { useModal } from '@/composables/useModal'
 import { usePagination } from '@/composables/usePagination'
 import { useFormToggle } from '@/composables/useFormToggle'
-import api from '@/stores/axios'
-import { useAuthStore } from '@/stores/auth'
+import { useauthStore } from '@/stores/authStore'
 import { getErrorMessage, getErrorCode } from '@/utils/errorHandler'
+import { logout } from '@/utils/authStoreUtils'
+import api from '@/stores/axios'
 
-const auth = useAuthStore()
-const router = useRouter()
+const authStore = useauthStore()
+const isLogout = ref(false)
+
+const handleLogout = async () => {
+  await logout(isLogout)
+}
 
 // Pagination
 const {
@@ -281,16 +294,6 @@ const debouncedFetch = () => {
 }
 
 // Navigation methods are now available from pagination composable above
-
-// Logout function
-const handleLogout = async () => {
-  try {
-    await auth.logout()
-    router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-  }
-}
 
 const openAddModal = () => {
   openForm(null, false) // Add mode

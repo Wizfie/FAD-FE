@@ -138,18 +138,18 @@
                     </div>
                     <div class="flex flex-col">
                       <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
-                        >Serah Terima:</span
-                      >
-                      <span class="text-gray-800 dark:text-gray-200">{{
-                        formatDate(row.bast) || '-'
-                      }}</span>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
                         >Tanggal Angkut:</span
                       >
                       <span class="text-gray-800 dark:text-gray-200">{{
                         formatDate(row.tglAngkut) || '-'
+                      }}</span>
+                    </div>
+                    <div class="flex flex-col">
+                      <span class="text-gray-600 dark:text-gray-400 font-semibold text-xs"
+                        >Serah Terima:</span
+                      >
+                      <span class="text-gray-800 dark:text-gray-200">{{
+                        formatDate(row.bast) || '-'
                       }}</span>
                     </div>
                   </div>

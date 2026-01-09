@@ -65,9 +65,16 @@
       </div>
 
       <!-- Logout Button (after Main Menu) -->
-      <BaseButton variant="danger" size="sm" @click="handleLogout">
+      <BaseButton
+        variant="danger"
+        size="sm"
+        @click="handleLogout"
+        :loading="islogout"
+        :disabled="islogout"
+      >
         <template #icon>
           <svg
+            v-if="!isLogout"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -82,7 +89,9 @@
             />
           </svg>
         </template>
-        <span class="hidden sm:inline">Logout</span>
+        <span class="hidden sm:inline">
+          {{ isLogout ? 'Logging out...' : 'Logout' }}
+        </span>
       </BaseButton>
     </div>
   </div>
@@ -90,13 +99,15 @@
 
 <script setup>
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
 import BaseButton from './BaseButton.vue'
 import DashboardSwitcher from './DashboardSwitcher.vue'
-import { useAuthStore } from '@/stores/auth.js'
+import { logout } from '@/utils/authUtils'
 
-const router = useRouter()
-const authStore = useAuthStore()
+const islogout = ref(false)
+
+const handleLogout = async () => {
+  await logout(islogout)
+}
 
 // Internal state management (seperti DashboardSwitcher)
 const isMenuOpen = ref(false)
@@ -116,16 +127,6 @@ const MenuIcon = {
       <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
     </svg>
   `,
-}
-
-// Logout function
-const handleLogout = async () => {
-  try {
-    await authStore.logout()
-    router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-  }
 }
 
 defineProps({

@@ -139,7 +139,7 @@
               <PhotoSlot
                 :photo="getPhotoByCategory(group.photos, 'BEFORE')"
                 category="BEFORE"
-                :groupId="group.id"
+                :groupId="groupId"
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
@@ -157,7 +157,7 @@
               <PhotoSlot
                 :photo="getPhotoByCategory(group.photos, 'ACTION')"
                 category="ACTION"
-                :groupId="group.id"
+                :groupId="groupId"
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
@@ -175,7 +175,7 @@
               <PhotoSlot
                 :photo="getPhotoByCategory(group.photos, 'AFTER')"
                 category="AFTER"
-                :groupId="group.id"
+                :groupId="groupId"
                 :areaId="areaId"
                 @upload="handlePhotoUpload"
                 @view="(photo, category) => viewPhoto(group, photo, category)"
@@ -348,18 +348,32 @@ const lightboxInitialIndex = ref(0)
 const lightboxGroupInfo = ref(null)
 
 // Route params
-const groupId = computed(() => Number(route.params.groupId))
-const areaId = computed(() => Number(route.params.areaId))
-const areaName = computed(() => route.query.areaName || route.query.name)
+const groupId = computed(() => {
+  const id = route.params.groupId
+  return id ? Number(id) : NaN
+})
+const areaId = computed(() => {
+  const id = route.params.areaId
+  return id ? Number(id) : NaN
+})
+const areaName = computed(() => route.query.areaName || route.query.name || 'Area Detail')
 
 // Load group data
 const loadData = async () => {
+  // Guard: ensure groupId is valid
+  if (!groupId.value || isNaN(groupId.value)) {
+    console.error('❌ Invalid groupId:', groupId.value)
+    errorMsg.value = 'ID grup tidak valid'
+    return
+  }
+
   loading.value = true
   errorMsg.value = ''
 
   try {
     const response = await api.get(`/api/comparison-groups/${groupId.value}`)
-    group.value = response.data
+    // Extract data from response wrapper
+    group.value = response.data.data || response.data
   } catch (error) {
     console.error('❌ Error loading group:', error)
     errorMsg.value = error.response?.data?.message || error.message || 'Gagal memuat data grup'

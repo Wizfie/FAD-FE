@@ -146,8 +146,6 @@
               @click="handleImageClick"
               @wheel.prevent="handleWheel"
               @mousedown="handleMouseDown"
-              @mousemove="handleMouseMove"
-              @mouseup="handleMouseUp"
               @mouseleave="handleMouseUp"
               @touchstart="handleTouchStart"
               @touchend="handleTouchEnd"
@@ -663,16 +661,31 @@ const handleMouseDown = (event) => {
       y: event.clientY - imagePosition.value.y,
     }
     event.preventDefault()
+    // Add document-level mouse move listener for smooth dragging
+    document.addEventListener('mousemove', documentHandleMouseMove)
+    document.addEventListener('mouseup', documentHandleMouseUp)
   }
 }
 
-const handleMouseMove = (event) => {
+const documentHandleMouseMove = (event) => {
   if (isDragging.value && zoomLevel.value > 1) {
     imagePosition.value = {
       x: event.clientX - dragStart.value.x,
       y: event.clientY - dragStart.value.y,
     }
+    event.preventDefault()
   }
+}
+
+const documentHandleMouseUp = () => {
+  isDragging.value = false
+  document.removeEventListener('mousemove', documentHandleMouseMove)
+  document.removeEventListener('mouseup', documentHandleMouseUp)
+}
+
+const handleMouseMove = (event) => {
+  // Legacy handler - now handled by document listeners
+  // Kept for backward compatibility
 }
 
 const handleMouseUp = () => {

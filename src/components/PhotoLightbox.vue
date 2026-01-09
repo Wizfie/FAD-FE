@@ -73,15 +73,8 @@
 
       <!-- Photo Wrapper for Drag -->
       <div
-        class="relative overflow-hidden w-full h-full flex items-center justify-center"
-        @mousedown="startDrag"
-        @mousemove="onDrag"
-        @mouseup="endDrag"
-        @mouseleave="endDrag"
-        @touchstart="startDrag"
-        @touchmove="onDrag"
-        @touchend="endDrag"
-        style="user-select: none; -webkit-user-select: none"
+        class="relative w-full h-full flex items-center justify-center"
+        style="user-select: none; -webkit-user-select: none; touch-action: none"
       >
         <!-- Main Photo -->
         <img
@@ -93,11 +86,19 @@
             'cursor-zoom-in': !isZoomed,
             'cursor-grab': isZoomed && !isDragging,
             'cursor-grabbing': isDragging,
-            'cursor-zoom-out': isZoomed && !isDragging,
             'transition-transform duration-200 ease-out': !isDragging,
           }"
           @load="onImageLoad"
           @click="toggleZoom"
+          @wheel.prevent="handleWheel"
+          @mousedown.stop="startDrag"
+          @mousemove.stop="onDrag"
+          @mouseup.stop="endDrag"
+          @mouseleave.stop="endDrag"
+          @touchstart.stop="startDrag"
+          @touchmove.stop="onDrag"
+          @touchend.stop="endDrag"
+          @touchcancel.stop="endDrag"
           @dragstart.prevent
           :style="photoTransformStyle"
         />
@@ -348,9 +349,12 @@ watch(
 )
 
 watch(currentIndex, () => {
-  // Don't reset zoom level, but reset position to center
-  zoomX.value = 0
-  zoomY.value = 0
+  // Reset position when navigating to new photo
+  // But don't reset if we're currently dragging
+  if (!isDragging.value) {
+    zoomX.value = 0
+    zoomY.value = 0
+  }
   showInfo.value = false // Hide info when navigating between photos
   imageLoading.value = true
 })
@@ -419,27 +423,55 @@ const startDrag = (event) => {
   dragStartY.value = clientY
 
   event.preventDefault()
+  event.stopPropagation()
 }
 
 const onDrag = (event) => {
-  if (!isDragging.value || !isZoomed.value) return
+  // Only process if actively dragging
+  if (!isDragging.value) return
 
-  const clientX = event.type.startsWith('touch') ? event.touches[0].clientX : event.clientX
-  const clientY = event.type.startsWith('touch') ? event.touches[0].clientY : event.clientY
+  // Guard: only pan if zoomed
+  if (!isZoomed.value) return
+
+  const clientX = event.type.startsWith('touch') ? event.touches[0]?.clientX : event.clientX
+  const clientY = event.type.startsWith('touch') ? event.touches[0]?.clientY : event.clientY
+
+  if (clientX === undefined || clientY === undefined) return
 
   const deltaX = clientX - dragStartX.value
   const deltaY = clientY - dragStartY.value
 
-  // Smooth drag with better sensitivity
-  const dragSensitivity = 0.8
-  zoomX.value = dragInitialX.value + (deltaX * dragSensitivity) / zoomLevel.value
-  zoomY.value = dragInitialY.value + (deltaY * dragSensitivity) / zoomLevel.value
+  // Direct translation without sensitivity dampening for smoother feel
+  zoomX.value = dragInitialX.value + deltaX / zoomLevel.value
+  zoomY.value = dragInitialY.value + deltaY / zoomLevel.value
 
   event.preventDefault()
+  event.stopPropagation()
 }
 
-const endDrag = () => {
+const endDrag = (event) => {
   isDragging.value = false
+  if (event) {
+    event.preventDefault()
+    event.stopPropagation()
+  }
+}
+
+// Wheel/Scroll zoom functionality
+const handleWheel = (event) => {
+  event.preventDefault()
+
+  // deltaY > 0 = scroll down (zoom out), deltaY < 0 = scroll up (zoom in)
+  const direction = event.deltaY > 0 ? -1 : 1
+  const zoomAmount = 1.2
+
+  if (direction > 0) {
+    // Scroll up = zoom in
+    zoomLevel.value = Math.min(zoomLevel.value * zoomAmount, 5)
+  } else {
+    // Scroll down = zoom out
+    zoomLevel.value = Math.max(zoomLevel.value / zoomAmount, 0.5)
+  }
 }
 
 // Info toggle functionality
@@ -563,13 +595,31 @@ const handleKeydown = (event) => {
 }
 
 // Add keyboard event listener
+const documentDragHandler = (event) => {
+  onDrag(event)
+}
+
+const documentEndDragHandler = (event) => {
+  endDrag(event)
+}
+
 watch(
   () => props.isOpen,
   (isOpen) => {
     if (isOpen) {
       document.addEventListener('keydown', handleKeydown)
+      document.addEventListener('mousemove', documentDragHandler)
+      document.addEventListener('mouseup', documentEndDragHandler)
+      document.addEventListener('touchmove', documentDragHandler, { passive: false })
+      document.addEventListener('touchend', documentEndDragHandler)
     } else {
       document.removeEventListener('keydown', handleKeydown)
+      document.removeEventListener('mousemove', documentDragHandler)
+      document.removeEventListener('mouseup', documentEndDragHandler)
+      document.removeEventListener('touchmove', documentDragHandler)
+      document.removeEventListener('touchend', documentEndDragHandler)
+      // Ensure drag is ended when closing
+      isDragging.value = false
       // Clear timer when closing
       if (infoTimer.value) {
         clearTimeout(infoTimer.value)

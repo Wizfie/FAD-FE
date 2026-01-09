@@ -23,13 +23,13 @@
           <BaseButton
             variant="danger"
             size="sm"
-            @click="confirmLogout"
-            :loading="isLoggingOut"
-            :disabled="isLoggingOut"
+            @click="handleLogout"
+            :loading="islogout"
+            :disabled="islogout"
           >
             <template #icon>
               <svg
-                v-if="!isLoggingOut"
+                v-if="!isLogout"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -45,7 +45,7 @@
               </svg>
             </template>
             <span class="hidden sm:inline">
-              {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+              {{ isLogout ? 'Logging out...' : 'Logout' }}
             </span>
           </BaseButton>
         </div>
@@ -72,14 +72,13 @@
         <BaseButton
           variant="danger"
           size="sm"
-          @click="confirmLogout"
-          class="h-10"
-          :loading="isLoggingOut"
-          :disabled="isLoggingOut"
+          @click="handleLogout"
+          :loading="islogout"
+          :disabled="islogout"
         >
           <template #icon>
             <svg
-              v-if="!isLoggingOut"
+              v-if="!isLogout"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -94,7 +93,9 @@
               />
             </svg>
           </template>
-          {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+          <span class="hidden sm:inline">
+            {{ isLogout ? 'Logging out...' : 'Logout' }}
+          </span>
         </BaseButton>
       </div>
     </div>
@@ -751,6 +752,14 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >Pengangkutan</label
+                >
+                <p class="mt-1 text-sm text-gray-900 dark:text-white">
+                  {{ selectedItem.tglAngkut || '-' }}
+                </p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                   >Tanggal Serah Terima</label
                 >
                 <p class="mt-1 text-sm text-gray-900 dark:text-white">
@@ -811,7 +820,25 @@ import { useAuthStore } from '@/stores/auth'
 import api from '@/stores/axios.js'
 import LastUpdate from '@/components/LastUpdate.vue'
 import { useToast } from '@/composables/useToast'
+import { logout } from '@/utils/authUtils'
 import { getErrorMessage, getErrorStatusCode } from '@/utils/errorHandler'
+
+const authStore = useAuthStore()
+const router = useRouter()
+const dataFad = ref([])
+const { error: errorMsg } = useToast()
+const islogout = ref(false)
+
+const handleLogout = async () => {
+  await logout(islogout)
+}
+
+const accordionState = ref({
+  Open: false,
+  OnProgress: false,
+  Hold: false,
+  Closed: false,
+})
 
 // List proyek yang perlu perhatian (Open >1 bulan atau Hold >3 bulan)
 const attentionProjects = computed(() => {
@@ -826,31 +853,8 @@ const attentionProjects = computed(() => {
       // Priority 2: Urutkan yang paling LAMA di atas (terlama = paling perlu attention)
       const aDate = parseDate(a.terimaFad || a.createdAt) || new Date(0)
       const bDate = parseDate(b.terimaFad || b.createdAt) || new Date(0)
-      return aDate - bDate // Yang lebih lama (tanggal lebih kecil) di atas
+      return aDate - bDate
     })
-  // Hapus batasan 10 item, tampilkan semua yang perlu attention
-})
-
-const authStore = useAuthStore()
-const router = useRouter()
-const dataFad = ref([])
-const { error: errorMsg } = useToast()
-
-// Logout state
-const isLoggingOut = ref(false)
-
-const accordionState = ref({
-  Open: false,
-  OnProgress: false,
-  Hold: false,
-  Closed: false,
-})
-
-const plantAccordionState = ref({
-  Open: {},
-  OnProgress: {},
-  Hold: {},
-  Closed: {},
 })
 
 // Attention section collapse state
@@ -889,33 +893,15 @@ const getData = async () => {
       })),
     })
 
-    // DETAILED DEBUG: Log actual response structure
-    if (responses.length > 0) {
-      const firstRes = responses[0]
-      console.log('🔍 [DashboardFad] First response structure:')
-      console.log('  - res.status:', firstRes.status)
-      console.log('  - res.data type:', typeof firstRes.data)
-      console.log('  - res.data keys:', Object.keys(firstRes.data || {}))
-      console.log('  - res.data.success:', firstRes.data?.success)
-      console.log('  - res.data.data type:', typeof firstRes.data?.data)
-      console.log('  - res.data.data is Array?', Array.isArray(firstRes.data?.data))
-      console.log('  - res.data.data length:', firstRes.data?.data?.length)
-      console.log('  - res.data.data first item:', firstRes.data?.data?.[0])
-    }
-
     const allRows = responses.flatMap((res) => {
-      // Handle both { data: [...] } and { success: true, data: { data: [...] } }
       const dataArray = res.data?.data.data
       if (Array.isArray(dataArray)) {
         return dataArray
       }
-      // Fallback if structure is different
       console.warn('⚠️ [DashboardFad] Unexpected response structure:', res.data)
       return []
     })
 
-    console.log('🔍 [DashboardFad] Total rows fetched:', allRows.length)
-    console.log('🔍 [DashboardFad] Rows by status:')
     const rowsByStatus = {}
     allRows.forEach((row) => {
       const status = row.status || 'unknown'
@@ -929,6 +915,7 @@ const getData = async () => {
       plant: item.plant ?? '',
       terimaFad: fmtDateToDDMMYYYY(item.terimaFad),
       terimaBbm: fmtDateToDDMMYYYY(item.terimaBbm),
+      tglAngkut: fmtDateToDDMMYYYY(item.tglAngkut),
       bast: fmtDateToDDMMYYYY(item.bast),
       vendor: item.vendor ?? item.vendorRel?.name ?? '',
       status: normalizeStatus(item.status),
@@ -937,38 +924,13 @@ const getData = async () => {
       createdAt: item.createdAt ?? null,
       id: item.id,
     }))
-
-    // VERIFY DATA WAS SET CORRECTLY
-    console.log('✅ [DashboardFad] dataFad.value after assignment:')
-    console.log('  - Length:', dataFad.value.length)
-    console.log('  - Is Array?', Array.isArray(dataFad.value))
-    console.log('  - First item:', dataFad.value[0])
-    console.log('  - Status values:', [...new Set(dataFad.value.map((d) => d.status))])
-
-    console.log('✅ [DashboardFad] Computed properties:')
-    console.log('  - filteredData length:', filteredData.value?.length)
-    console.log('  - totalProjects:', totalProjects.value)
-    console.log('  - completionRate:', completionRate.value)
   } catch (error) {
     console.error('❌ [DashboardFad] Failed to fetch FAD data:', error)
-    console.error('❌ [DashboardFad] Error Stack:', error.stack)
-    console.error('❌ [DashboardFad] Error status:', getErrorStatusCode(error))
-    console.error('❌ [DashboardFad] Error message:', getErrorMessage(error))
-    console.error('❌ [DashboardFad] Error code:', error.response?.data?.code)
-    console.error('❌ [DashboardFad] Full error response:', error.response?.data)
-    console.error('❌ [DashboardFad] User role:', authStore.user?.role)
-    console.error('❌ [DashboardFad] User modules:', authStore.user?.modules)
-    console.error('❌ [DashboardFad] User details:', authStore.user)
-    console.error('❌ [DashboardFad] API baseURL:', api.defaults.baseURL)
-    console.error(
-      '❌ [DashboardFad] Request URL would be:',
-      `${api.defaults.baseURL}/api/v1/get-fad`,
-    )
 
     const errorMessage = getErrorMessage(error)
     const statusCode = getErrorStatusCode(error)
 
-    // Tampilkan error message yang user-friendly
+    // Tampilkan error message
     if (statusCode === 403) {
       errorMsg(
         '⛔ Akses ditolak: Anda tidak memiliki permission untuk melihat data FAD. Pastikan user memiliki module FAD.',
@@ -1057,18 +1019,6 @@ const formatDate = (dateString) => {
   })
 }
 
-// Summary Statistics
-const totalProjects = computed(() => filteredData.value.length)
-
-const completionRate = computed(() => {
-  const total = totalProjects.value
-  if (total === 0) return 0
-  const completed = getStatusCount('Closed')
-  return Math.round((completed / total) * 100)
-})
-
-// parseDate function now imported from helper.js to avoid duplication
-
 // Alert & Monitoring Statistics
 const longHoldProjects = computed(() => {
   const threeMonthsAgo = new Date()
@@ -1141,14 +1091,6 @@ const getAttentionMessage = (item) => {
   return ''
 }
 
-// Helper to check if plant has projects needing attention
-const plantNeedsAttention = (status, plant) => {
-  const plantProjects = filteredData.value.filter(
-    (item) => item.status === status && item.plant === plant,
-  )
-  return plantProjects.some((project) => needsAttention(project))
-}
-
 // Navigate to status-specific page with plant search parameter
 const navigateToPlant = (plantName, status) => {
   const routeMap = {
@@ -1168,21 +1110,6 @@ const navigateToPlant = (plantName, status) => {
     console.warn(`Unknown status: ${status}`)
   }
 }
-const currentMonth = new Date().getMonth()
-const currentYear = new Date().getFullYear()
-
-const newThisMonth = computed(() => {
-  return filteredData.value.filter((item) => {
-    if (!item.createdAt) return false
-    const itemDate = parseDate(item.createdAt)
-    if (!itemDate) return false
-    return (
-      itemDate.getMonth() === currentMonth &&
-      itemDate.getFullYear() === currentYear &&
-      item.status === 'Open'
-    )
-  }).length
-})
 
 // Toggle Accordion untuk Status (Exclusive - hanya satu yang terbuka)
 const toggleAccordion = (status) => {
@@ -1259,28 +1186,28 @@ const openUserGuide = () => {
 }
 
 // Logout confirmation and handling
-const confirmLogout = () => {
-  if (confirm('Apakah Anda yakin ingin logout?')) {
-    handleLogout()
-  }
-}
+// const confirmLogout = () => {
+//   if (confirm('Apakah Anda yakin ingin logout?')) {
+//     handleLogout()
+//   }
+// }
 
-const handleLogout = async () => {
-  if (isLoggingOut.value) return
+// const handleLogout = async () => {
+//   if (isLoggingOut.value) return
 
-  isLoggingOut.value = true
+//   isLoggingOut.value = true
 
-  try {
-    await authStore.logout()
-    router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-    // Show error message to user (you can implement toast notification here)
-    alert('Terjadi kesalahan saat logout. Silakan coba lagi.')
-  } finally {
-    isLoggingOut.value = false
-  }
-}
+//   try {
+//     await authStore.logout()
+//     router.push('/login')
+//   } catch (error) {
+//     console.error('Logout error:', error)
+//     // Show error message to user (you can implement toast notification here)
+//     alert('Terjadi kesalahan saat logout. Silakan coba lagi.')
+//   } finally {
+//     isLoggingOut.value = false
+//   }
+// }
 
 onMounted(() => {
   getData(1)

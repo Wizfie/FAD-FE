@@ -8,9 +8,16 @@
           System Administration & Management
         </p>
       </div>
-      <BaseButton variant="danger" size="sm" @click="handleLogout">
+      <BaseButton
+        variant="danger"
+        size="sm"
+        @click="handleLogout"
+        :loading="islogout"
+        :disabled="islogout"
+      >
         <template #icon>
           <svg
+            v-if="!isLogout"
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
@@ -25,7 +32,9 @@
             />
           </svg>
         </template>
-        <span class="hidden sm:inline">Logout</span>
+        <span class="hidden sm:inline">
+          {{ isLogout ? 'Logging out...' : 'Logout' }}
+        </span>
       </BaseButton>
     </div>
 
@@ -419,13 +428,9 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import BaseButton from '@/components/BaseButton.vue'
 import api from '@/stores/axios'
-
-const router = useRouter()
-const authStore = useAuthStore()
+import { logout } from '@/utils/authUtils'
 
 const stats = ref({
   totalUsers: 0,
@@ -438,10 +443,10 @@ const stats = ref({
   logsThisWeek: 0,
   lastActivity: null,
 })
+const isLogout = ref(false)
 
-const handleLogout = () => {
-  authStore.logout()
-  router.push({ name: 'login' })
+const handleLogout = async () => {
+  await logout(isLogout)
 }
 
 const formatLastActivity = (timestamp) => {

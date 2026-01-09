@@ -43,9 +43,16 @@
         <!-- Dashboard Switcher -->
         <DashboardSwitcher />
         <!-- Logout Button -->
-        <BaseButton variant="danger" size="sm" @click="handleLogout">
+        <BaseButton
+          variant="danger"
+          size="sm"
+          @click="handleLogout"
+          :loading="islogout"
+          :disabled="islogout"
+        >
           <template #icon>
             <svg
+              v-if="!isLogout"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -60,7 +67,9 @@
               />
             </svg>
           </template>
-          <span class="hidden sm:inline">Logout</span>
+          <span class="hidden sm:inline">
+            {{ isLogout ? 'Logging out...' : 'Logout' }}
+          </span>
         </BaseButton>
       </div>
     </div>
@@ -147,8 +156,10 @@
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow">
         <div class="flex items-center justify-between">
           <div>
-            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Active Areas</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ activeAreas }}</p>
+            <p class="text-sm font-medium text-gray-500 dark:text-gray-400">Progress Areas</p>
+            <p class="text-2xl font-bold text-gray-900 dark:text-white">
+              {{ completedGroups }}/{{ totalGroups }}
+            </p>
           </div>
           <div class="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
             <svg
@@ -226,9 +237,7 @@
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
           TPS Areas - Monitoring 5R
         </h2>
-        <div class="text-sm text-gray-600 dark:text-gray-400">
-          {{ completedGroups }}/{{ totalGroups }} item 5R selesai
-        </div>
+        <div class="text-sm text-gray-600 dark:text-gray-400"></div>
       </div>
 
       <div class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
@@ -722,10 +731,12 @@ import DashboardSwitcher from '@/components/DashboardSwitcher.vue'
 import BaseModal from '@/components/BaseModal.vue'
 import BaseButton from '@/components/BaseButton.vue'
 import { useAuthStore } from '@/stores/auth.js'
+import { logout } from '@/utils/authUtils'
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const isLogout = ref(false)
 
 // Data states
 const areas = ref([])
@@ -755,6 +766,10 @@ const showDeleteAreaModal = ref(false)
 const deletingArea = ref(null)
 const isDeletingArea = ref(false)
 const deleteValidationError = ref('')
+
+const handleLogout = async () => {
+  await logout(isLogout)
+}
 
 // Reusable validation functions
 const validateAreaName = (name, excludeId = null) => {
@@ -1223,16 +1238,6 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit',
   })
-}
-
-// Logout function
-const handleLogout = async () => {
-  try {
-    await authStore.logout()
-    router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-  }
 }
 
 // Watch filter changes and save to localStorage

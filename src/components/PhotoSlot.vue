@@ -5,6 +5,7 @@
       <!-- Photo Image with separate hover -->
       <div @click="handlePhotoClick" class="relative group cursor-pointer">
         <img
+          :key="photo.id"
           :src="getImageUrl(photo.thumbUrl || photo.url)"
           :alt="getCategoryText(category)"
           class="w-full h-48 object-cover rounded-lg shadow-md hover:shadow-lg transition-shadow"
@@ -588,6 +589,18 @@ const convertMarkdownToHTML = (text) => {
   }
 
   return html
+}
+
+// Image loading handlers
+const handleImageError = (event) => {
+  // Show fallback error indicator
+  const img = event.target
+  if (img) {
+    img.style.backgroundColor = '#fee2e2'
+    img.style.display = 'flex'
+    img.style.alignItems = 'center'
+    img.style.justifyContent = 'center'
+  }
 }
 
 // Handle Delete Photo
